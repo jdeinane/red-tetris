@@ -1,0 +1,28 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(10, 30px);
+  grid-template-rows: repeat(20, 30px);
+  gap: 1px;
+  background: #111;
+  padding: 5px;
+  width: fit-content;
+  margin: 20px auto;
+}
+
+.cell {
+  width: 30px;
+  height: 30px;
+  background: #000;
+}
+
+.cell-empty {
+  background: #1a1a1a;
+}
+
+.cell-I { background: #00ffff; }
+.cell-O { background: #ffff00; }
+.cell-T { background: #800080; }
+.cell-S { background: #00ff00; }
+.cell-Z { background: #ff0000; }
+.cell-J { background: #0000ff; }
+.cell-L { background: #ffa500; }

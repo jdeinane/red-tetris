@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
+import TetrisGame from "../tetris/TetrisGame";
 
 /* Client game page. This file handles:
 	- reads the room's and player's name in the URL
@@ -14,6 +15,7 @@ let socket;
 export default function GamePage() {
 	const { room, player } = useParams();
 	const [players, setPlayers] = useState([]);
+	const [sequence, setSequence] = useState(null);
 
 	useEffect(() => {
 		socket = io("http://localhost:3000");
@@ -28,7 +30,7 @@ export default function GamePage() {
 			console.log("** Game started! ***");
 			console.log("Sequence:", sequence);
 
-			//TODO: demarrer le moteur tetris
+			setSequence(sequence);
 		});
 
 		return () => socket.disconnect();
@@ -56,6 +58,9 @@ export default function GamePage() {
 			</li>
 		))}
 		</ul>
+		{sequence && (
+			<TetrisGame sequence={sequence} />
+		)}
 		</div>
 	);
 }
