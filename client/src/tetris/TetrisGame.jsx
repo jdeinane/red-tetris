@@ -4,6 +4,9 @@ import {
 	createEmptyBoard,
 	createPiece,
 	tick,
+	movePiece,
+	rotatePiece,
+	hardDrop
 } from "../../../shared/tetris.js"
 
 /* Main game loop */
@@ -43,6 +46,35 @@ export default function TetrisGame({ sequence }) {
 
 		return () => clearInterval(interval);
 	}, [activePiece]);
+
+	// Keyboard controls
+	useEffect(() => {
+		if (!activePiece) return;
+
+		function handleKey(e) {
+			if (e.key === "ArrowLeft")
+				setActivePiece(p => movePiece(board, p, -1, 0));
+
+			if (e.key === "ArrowRight") 
+				setActivePiece(p => movePiece(board, p, 1, 0));
+
+			if (e.key === "ArrowDown") 
+				setActivePiece(p => movePiece(board, p, 0, 1));
+
+			if (e.key === "ArrowUp")
+				setActivePiece(p => rotatePiece(board, p));
+
+			if (e.code === "Space")
+				setActivePiece(p => hardDrop(board, p));
+		}
+		
+		window.addEventListener("keydown", handleKey);
+
+		return () => {
+			window.removeEventListener("keydown", handleKey);
+		};
+		
+	}, [activePiece, board]);
 
 	// DEBUG
 	useEffect(() => {
