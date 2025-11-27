@@ -7,7 +7,8 @@ import {
 	movePiece,
 	rotatePiece,
 	hardDrop,
-	getGhostPiece
+	getGhostPiece,
+	hasCollision
 } from "../../../shared/tetris.js"
 
 /* Main game loop */
@@ -16,18 +17,37 @@ export default function TetrisGame({ sequence }) {
 	const [board, setBoard] = useState(createEmptyBoard());
 	const [activePiece, setActivePiece] = useState(null);
 	const [index, setIndex] = useState(0);
+	const [isGameOver, setIsGameOver] = useState(false);
 
-	// Spawn initial piece
+	// Spawn new piece
+	function spawnPiece() {
+		const nextType = sequence[index];
+		const newPiece = createPiece(nextType);
+		const cannotMove =
+			hasCollision(board, newPiece, -1, 0) &&
+			hasCollision(board, newPiece, 1, 0) &&
+			hasCollision(board, newPiece, 0, 1);
+		
+		if (cannotMove) {
+			setIsGameOver(true);
+			return;
+		}
+
+		setActivePiece(newPiece);
+		setIndex(i => i + 1);
+	}
+
+	// Initial spawn
 	useEffect(() => {
-		if (!activePiece && sequence) {
-			const nextType = sequence[index];
-			setActivePiece(createPiece(nextType));
-			setIndex((i) => i + 1);
+		if (!activePiece && sequence && !isGameOver) {
+			spawnPiece();
 		}
 	}, [activePiece, sequence, index]);
 
 	// Game loop
 	useEffect(() => {
+		if (isGameOver) return;
+
 		const interval = setInterval(() => {
 			if (!activePiece) return;
 
@@ -35,18 +55,14 @@ export default function TetrisGame({ sequence }) {
 
 			if (result.locked) {
 				setBoard(result.board);
-
-				const nextType = sequence[index];
-				setActivePiece(createPiece(nextType));
-				setIndex((i) => i + 1);
-
+				setActivePiece(null);
 			} else {
 				setActivePiece(result.activePiece);
 			}
 		}, 500);
 
 		return () => clearInterval(interval);
-	}, [activePiece]);
+	}, [activePiece, board, isGameOver]);
 
 	// Keyboard controls
 	useEffect(() => {
@@ -77,19 +93,69 @@ export default function TetrisGame({ sequence }) {
 
 	}, [activePiece, board]);
 
+
+	// Restart Game
+	function restartGame() {
+		setBoard(createEmptyBoard());
+		setIsGameOver(false);
+		setIndex(0);
+
+		// Respawn first piece
+		const newPiece = createPiece(sequence[0]);
+		setActivePiece(newPiece);
+	}
+
 	// DEBUG
 	useEffect(() => {
 		console.clear();
 		console.table(board);
 	}, [board]);
 
+	// RENDER
 	return (
-		<div>
-			<Board
-				board ={board} 
-				activePiece={activePiece} 
-				ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
-			/>
+		<div style={{ position: "relative" }}>
+
+		<Board
+			board={board}
+			activePiece={activePiece}
+			ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
+		/>
+
+		{isGameOver && (
+			<div
+			style={{
+				position: "absolute",
+				top: "35%",
+				left: "50%",
+				transform: "translate(-50%, -50%)",
+				background: "rgba(0,0,0,0.85)",
+				padding: "40px",
+				color: "white",
+				borderRadius: "12px",
+				textAlign: "center",
+				fontSize: "32px",
+				width: "300px"
+			}}
+			>
+			<h1 style={{ marginBottom: "20px" }}>GAME OVER</h1>
+			<button
+				onClick={restartGame}
+				style={{
+				padding: "12px 25px",
+				fontSize: "18px",
+				cursor: "pointer",
+				background: "#ff69b4",
+				color: "white",
+				border: "none",
+				borderRadius: "8px"
+				}}
+			>
+				Restart
+			</button>
+			</div>
+		)}
+
 		</div>
 	);
-}
+
+	}
