@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Board from "./Board";
+import NextPiece from "./NextPiece";
 import {
 	createEmptyBoard,
 	createPiece,
@@ -113,30 +114,39 @@ export default function TetrisGame({ sequence }) {
 
 	// RENDER
 	return (
-		<div style={{ position: "relative" }}>
-
+		<div style={{ 
+			display: "flex", 
+			flexDirection: "row", 
+			justifyContent: "center",
+			gap: "40px",
+			position: "relative"
+		}}>
+		
+		{/* Board */}
 		<Board
 			board={board}
 			activePiece={activePiece}
 			ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
 		/>
 
+		{/* Next piece */}
+		<NextPiece type={sequence[index]} />
+
+		{/* Game Over UI */}
 		{isGameOver && (
-			<div
-			style={{
-				position: "absolute",
-				top: "35%",
-				left: "50%",
-				transform: "translate(-50%, -50%)",
-				background: "rgba(0,0,0,0.85)",
-				padding: "40px",
-				color: "white",
-				borderRadius: "12px",
-				textAlign: "center",
-				fontSize: "32px",
-				width: "300px"
-			}}
-			>
+			<div style={{
+			position: "absolute",
+			top: "35%",
+			left: "50%",
+			transform: "translate(-50%, -50%)",
+			background: "rgba(0,0,0,0.85)",
+			padding: "40px",
+			color: "white",
+			borderRadius: "12px",
+			textAlign: "center",
+			fontSize: "32px",
+			width: "300px"
+			}}>
 			<h1 style={{ marginBottom: "20px" }}>GAME OVER</h1>
 			<button
 				onClick={restartGame}
@@ -157,5 +167,4 @@ export default function TetrisGame({ sequence }) {
 
 		</div>
 	);
-
-	}
+}

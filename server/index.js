@@ -70,7 +70,7 @@ io.on("connection", (socket) => {
 
     io.to(room).emit("start-game", { sequence });
 
-    console.log(`** Game started in room ${room}`);
+    console.log(`** Game started in room ${room} **`);
   });
 });
 
