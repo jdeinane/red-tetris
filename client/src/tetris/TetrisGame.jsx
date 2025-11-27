@@ -6,7 +6,8 @@ import {
 	tick,
 	movePiece,
 	rotatePiece,
-	hardDrop
+	hardDrop,
+	getGhostPiece
 } from "../../../shared/tetris.js"
 
 /* Main game loop */
@@ -73,7 +74,7 @@ export default function TetrisGame({ sequence }) {
 		return () => {
 			window.removeEventListener("keydown", handleKey);
 		};
-		
+
 	}, [activePiece, board]);
 
 	// DEBUG
@@ -84,8 +85,11 @@ export default function TetrisGame({ sequence }) {
 
 	return (
 		<div>
-			<Board board ={board} activePiece={activePiece} />
+			<Board
+				board ={board} 
+				activePiece={activePiece} 
+				ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
+			/>
 		</div>
 	);
 }
-

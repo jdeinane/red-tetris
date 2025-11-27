@@ -101,7 +101,7 @@ function rotateMatrixCW(matrix) {
 
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
-			res[x][rows - 1 -y] = matrix[y][x];
+			res[x][rows - 1 - y] = matrix[y][x];
 		}
 	}
 	return res;
@@ -196,4 +196,17 @@ export function tick(board, activePiece) {
 		locked: false,
 		clearedLines: 0,
 	};
+}
+
+/* Ghost piece: transparent shadow that shows where the piece is gonna land:
+	- clones the piece
+	- lets down until it cannot
+	- returns its finale position */
+export function getGhostPiece(board, piece) {
+	let ghost = { ...piece };
+
+	while (!hasCollision(board, ghost, 0, 1)) {
+		ghost = { ...ghost, y: ghost.y + 1};
+	}
+	return ghost;
 }

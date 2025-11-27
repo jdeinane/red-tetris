@@ -1,3 +1,5 @@
+/* BOARD */
+
 .board {
   display: grid;
   grid-template-columns: repeat(10, 30px);
@@ -26,3 +28,10 @@
 .cell-Z { background: #ff0000; }
 .cell-J { background: #0000ff; }
 .cell-L { background: #ffa500; }
+
+/* CELL GHOST */
+
+.cell-ghost {
+  background: rgba(255, 105, 180, 0.2);
+  border: 1px dashed rgba(255, 105, 180, 0.3);
+}
