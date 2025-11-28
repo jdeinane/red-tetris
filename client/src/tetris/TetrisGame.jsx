@@ -19,13 +19,20 @@ export default function TetrisGame({ sequence }) {
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [inputLocked, setInputLocked] = useState(false);
 
   // HOLD
   const [holdType, setHoldType] = useState(null);
   const [canHold, setCanHold] = useState(true);
 
-  // Spawn new piece
   function spawnPiece() {
+    if (!sequence) return;
+
+    if (index >= sequence.length) {
+      setIsGameOver(true);
+      return;
+    }
+
     const nextType = sequence[index];
     const newPiece = createPiece(nextType);
 
@@ -33,14 +40,14 @@ export default function TetrisGame({ sequence }) {
     setIndex((i) => i + 1);
   }
 
-  // Initial spawn
   useEffect(() => {
-    if (!activePiece && sequence && !isGameOver) {
+    if (!sequence || isGameOver) return;
+
+    if (!activePiece) {
       spawnPiece();
     }
-  }, [activePiece, sequence, isGameOver]);
+  }, [activePiece, sequence, isGameOver, index]);
 
-  // Game loop
   useEffect(() => {
     if (isGameOver) return;
 
@@ -52,18 +59,19 @@ export default function TetrisGame({ sequence }) {
       if (result.locked) {
         const newBoard = result.board;
 
-        // GAME OVER
-        const topRowHasBlocks = newBoard[0].some((cell) => cell !== 0);
-
         setBoard(newBoard);
 
+        const topRowHasBlocks = newBoard[0].some((cell) => cell !== 0);
         if (topRowHasBlocks) {
           setIsGameOver(true);
           setActivePiece(null);
           return;
         }
 
+        setInputLocked(true);
         setActivePiece(null);
+        setTimeout(() => setInputLocked(false), 50);
+
         setCanHold(true);
       } else {
         setActivePiece(result.activePiece);
@@ -73,7 +81,7 @@ export default function TetrisGame({ sequence }) {
     return () => clearInterval(interval);
   }, [activePiece, board, isGameOver]);
 
-  // HOLD LOGIC
+  // HOLD
   function handleHold() {
     if (!activePiece || !canHold || isGameOver) return;
 
@@ -81,43 +89,40 @@ export default function TetrisGame({ sequence }) {
 
     if (holdType === null) {
       setHoldType(activePiece.type);
+      setActivePiece(null);
       spawnPiece();
       return;
     }
 
     const swappedPiece = createPiece(holdType);
+
     setHoldType(activePiece.type);
     setActivePiece(swappedPiece);
   }
 
-  // Keyboard
   useEffect(() => {
-    if (!activePiece || isGameOver) return;
-
     function handleKey(e) {
-      if (e.key === "ArrowLeft")
-        setActivePiece((p) => movePiece(board, p, -1, 0));
+      if (inputLocked || !activePiece || isGameOver) return;
 
-      if (e.key === "ArrowRight")
-        setActivePiece((p) => movePiece(board, p, 1, 0));
-
-      if (e.key === "ArrowDown")
-        setActivePiece((p) => movePiece(board, p, 0, 1));
-
-      if (e.key === "ArrowUp")
-        setActivePiece((p) => rotatePiece(board, p));
-
-      if (e.code === "Space")
-        setActivePiece((p) => hardDrop(board, p));
-
-      if (e.key === "Shift") handleHold();
+      if (e.key === "ArrowLeft") {
+        setActivePiece((p) => (p ? movePiece(board, p, -1, 0) : p));
+      } else if (e.key === "ArrowRight") {
+        setActivePiece((p) => (p ? movePiece(board, p, 1, 0) : p));
+      } else if (e.key === "ArrowDown") {
+        setActivePiece((p) => (p ? movePiece(board, p, 0, 1) : p));
+      } else if (e.key === "ArrowUp") {
+        setActivePiece((p) => (p ? rotatePiece(board, p) : p));
+      } else if (e.code === "Space") {
+        setActivePiece((p) => (p ? hardDrop(board, p) : p));
+      } else if (e.key === "Shift") {
+        handleHold();
+      }
     }
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [activePiece, board, isGameOver, canHold, holdType]);
+  }, [board, activePiece, isGameOver, inputLocked, canHold, holdType]);
 
-  // Restart game
   function restartGame() {
     setBoard(createEmptyBoard());
     setActivePiece(null);
@@ -125,7 +130,10 @@ export default function TetrisGame({ sequence }) {
     setHoldType(null);
     setCanHold(true);
     setIsGameOver(false);
+    setInputLocked(false);
   }
+
+  const nextType = index < sequence.length ? sequence[index] : null;
 
   return (
     <div
@@ -137,16 +145,20 @@ export default function TetrisGame({ sequence }) {
         position: "relative",
       }}
     >
+      {/* HOLD */}
       <HoldPiece type={holdType} />
 
+      {/* BOARD */}
       <Board
         board={board}
         activePiece={activePiece}
         ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
       />
 
-      <NextPiece type={sequence[index]} />
+      {/* NEXT */}
+      <NextPiece type={nextType} />
 
+      {/* GAME OVER UI */}
       {isGameOver && (
         <div
           style={{
