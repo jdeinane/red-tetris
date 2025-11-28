@@ -1,170 +1,185 @@
 import { useEffect, useState } from "react";
 import Board from "./Board";
 import NextPiece from "./NextPiece";
+import HoldPiece from "./HoldPiece";
 import {
-	createEmptyBoard,
-	createPiece,
-	tick,
-	movePiece,
-	rotatePiece,
-	hardDrop,
-	getGhostPiece,
-	hasCollision
-} from "../../../shared/tetris.js"
+  createEmptyBoard,
+  createPiece,
+  tick,
+  movePiece,
+  rotatePiece,
+  hardDrop,
+  getGhostPiece,
+} from "../../../shared/tetris.js";
 
 /* Main game loop */
 
 export default function TetrisGame({ sequence }) {
-	const [board, setBoard] = useState(createEmptyBoard());
-	const [activePiece, setActivePiece] = useState(null);
-	const [index, setIndex] = useState(0);
-	const [isGameOver, setIsGameOver] = useState(false);
+  const [board, setBoard] = useState(createEmptyBoard());
+  const [activePiece, setActivePiece] = useState(null);
+  const [index, setIndex] = useState(0);
+  const [isGameOver, setIsGameOver] = useState(false);
 
-	// Spawn new piece
-	function spawnPiece() {
-		const nextType = sequence[index];
-		const newPiece = createPiece(nextType);
-		const cannotMove =
-			hasCollision(board, newPiece, -1, 0) &&
-			hasCollision(board, newPiece, 1, 0) &&
-			hasCollision(board, newPiece, 0, 1);
-		
-		if (cannotMove) {
-			setIsGameOver(true);
-			return;
-		}
+  // HOLD
+  const [holdType, setHoldType] = useState(null);
+  const [canHold, setCanHold] = useState(true);
 
-		setActivePiece(newPiece);
-		setIndex(i => i + 1);
-	}
+  // Spawn new piece
+  function spawnPiece() {
+    const nextType = sequence[index];
+    const newPiece = createPiece(nextType);
 
-	// Initial spawn
-	useEffect(() => {
-		if (!activePiece && sequence && !isGameOver) {
-			spawnPiece();
-		}
-	}, [activePiece, sequence, index]);
+    setActivePiece(newPiece);
+    setIndex((i) => i + 1);
+  }
 
-	// Game loop
-	useEffect(() => {
-		if (isGameOver) return;
+  // Initial spawn
+  useEffect(() => {
+    if (!activePiece && sequence && !isGameOver) {
+      spawnPiece();
+    }
+  }, [activePiece, sequence, isGameOver]);
 
-		const interval = setInterval(() => {
-			if (!activePiece) return;
+  // Game loop
+  useEffect(() => {
+    if (isGameOver) return;
 
-			const result = tick(board, activePiece);
+    const interval = setInterval(() => {
+      if (!activePiece) return;
 
-			if (result.locked) {
-				setBoard(result.board);
-				setActivePiece(null);
-			} else {
-				setActivePiece(result.activePiece);
-			}
-		}, 500);
+      const result = tick(board, activePiece);
 
-		return () => clearInterval(interval);
-	}, [activePiece, board, isGameOver]);
+      if (result.locked) {
+        const newBoard = result.board;
 
-	// Keyboard controls
-	useEffect(() => {
-		if (!activePiece) return;
+        // GAME OVER
+        const topRowHasBlocks = newBoard[0].some((cell) => cell !== 0);
 
-		function handleKey(e) {
-			if (e.key === "ArrowLeft")
-				setActivePiece(p => movePiece(board, p, -1, 0));
+        setBoard(newBoard);
 
-			if (e.key === "ArrowRight") 
-				setActivePiece(p => movePiece(board, p, 1, 0));
+        if (topRowHasBlocks) {
+          setIsGameOver(true);
+          setActivePiece(null);
+          return;
+        }
 
-			if (e.key === "ArrowDown") 
-				setActivePiece(p => movePiece(board, p, 0, 1));
+        setActivePiece(null);
+        setCanHold(true);
+      } else {
+        setActivePiece(result.activePiece);
+      }
+    }, 500);
 
-			if (e.key === "ArrowUp")
-				setActivePiece(p => rotatePiece(board, p));
+    return () => clearInterval(interval);
+  }, [activePiece, board, isGameOver]);
 
-			if (e.code === "Space")
-				setActivePiece(p => hardDrop(board, p));
-		}
-		
-		window.addEventListener("keydown", handleKey);
+  // HOLD LOGIC
+  function handleHold() {
+    if (!activePiece || !canHold || isGameOver) return;
 
-		return () => {
-			window.removeEventListener("keydown", handleKey);
-		};
+    setCanHold(false);
 
-	}, [activePiece, board]);
+    if (holdType === null) {
+      setHoldType(activePiece.type);
+      spawnPiece();
+      return;
+    }
 
+    const swappedPiece = createPiece(holdType);
+    setHoldType(activePiece.type);
+    setActivePiece(swappedPiece);
+  }
 
-	// Restart Game
-	function restartGame() {
-		setBoard(createEmptyBoard());
-		setIsGameOver(false);
-		setIndex(0);
+  // Keyboard
+  useEffect(() => {
+    if (!activePiece || isGameOver) return;
 
-		// Respawn first piece
-		const newPiece = createPiece(sequence[0]);
-		setActivePiece(newPiece);
-	}
+    function handleKey(e) {
+      if (e.key === "ArrowLeft")
+        setActivePiece((p) => movePiece(board, p, -1, 0));
 
-	// DEBUG
-	useEffect(() => {
-		console.clear();
-		console.table(board);
-	}, [board]);
+      if (e.key === "ArrowRight")
+        setActivePiece((p) => movePiece(board, p, 1, 0));
 
-	// RENDER
-	return (
-		<div style={{ 
-			display: "flex", 
-			flexDirection: "row", 
-			justifyContent: "center",
-			gap: "40px",
-			position: "relative"
-		}}>
-		
-		{/* Board */}
-		<Board
-			board={board}
-			activePiece={activePiece}
-			ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
-		/>
+      if (e.key === "ArrowDown")
+        setActivePiece((p) => movePiece(board, p, 0, 1));
 
-		{/* Next piece */}
-		<NextPiece type={sequence[index]} />
+      if (e.key === "ArrowUp")
+        setActivePiece((p) => rotatePiece(board, p));
 
-		{/* Game Over UI */}
-		{isGameOver && (
-			<div style={{
-			position: "absolute",
-			top: "35%",
-			left: "50%",
-			transform: "translate(-50%, -50%)",
-			background: "rgba(0,0,0,0.85)",
-			padding: "40px",
-			color: "white",
-			borderRadius: "12px",
-			textAlign: "center",
-			fontSize: "32px",
-			width: "300px"
-			}}>
-			<h1 style={{ marginBottom: "20px" }}>GAME OVER</h1>
-			<button
-				onClick={restartGame}
-				style={{
-				padding: "12px 25px",
-				fontSize: "18px",
-				cursor: "pointer",
-				background: "#ff69b4",
-				color: "white",
-				border: "none",
-				borderRadius: "8px"
-				}}
-			>
-				Restart
-			</button>
-			</div>
-		)}
+      if (e.code === "Space")
+        setActivePiece((p) => hardDrop(board, p));
 
-		</div>
-	);
+      if (e.key === "Shift") handleHold();
+    }
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [activePiece, board, isGameOver, canHold, holdType]);
+
+  // Restart game
+  function restartGame() {
+    setBoard(createEmptyBoard());
+    setActivePiece(null);
+    setIndex(0);
+    setHoldType(null);
+    setCanHold(true);
+    setIsGameOver(false);
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        gap: "40px",
+        position: "relative",
+      }}
+    >
+      <HoldPiece type={holdType} />
+
+      <Board
+        board={board}
+        activePiece={activePiece}
+        ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
+      />
+
+      <NextPiece type={sequence[index]} />
+
+      {isGameOver && (
+        <div
+          style={{
+            position: "absolute",
+            top: "35%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.85)",
+            padding: "40px",
+            color: "white",
+            borderRadius: "12px",
+            textAlign: "center",
+            fontSize: "32px",
+            width: "300px",
+          }}
+        >
+          <h1>GAME OVER</h1>
+          <button
+            onClick={restartGame}
+            style={{
+              padding: "12px 25px",
+              fontSize: "18px",
+              cursor: "pointer",
+              background: "#ff69b4",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+            }}
+          >
+            Restart
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
