@@ -29,6 +29,29 @@ const io = new Server(server, {
 // For serving client later (for now just public/)
 app.use(express.static(path.join(__dirname, "../client/public")));
 
+/* HELPER: Check winner */
+function checkWinner(room) {
+  if (!room.isGameRunning)
+    return;
+
+  const aliveCount = room.alive.size;
+
+  if (aliveCount === 1) {
+    const winnerId = [...room.alive][0];
+    const winnerName = room.players[winnerId].username;
+
+    console.log(`🏆 Winner is ${winnerName} in room ${room.name}`);
+
+    io.to(room.name).emit("game-ended", {
+      winner: winnerName,
+    });
+
+    // Reset room for next round
+    room.isGameRunning = false;
+    room.alive.clear();
+  }
+}
+
 /* Create a connection for each player */
 io.on("connection", (socket) => {
   console.log("🟢 Connected:", socket.id);
@@ -58,7 +81,7 @@ io.on("connection", (socket) => {
     const room = removeEmptyRoom(socket.id);
 
     if (room) {
-      // Notify update
+      checkWinner(room);
       io.to(room.name).emit("room-players", room.getPlayersInfo());
     }
   });
@@ -75,13 +98,25 @@ io.on("connection", (socket) => {
       return;
 
     r.isGameRunning = true;
-  
+    r.alive = new Set(Object.keys(r.players));
+
     const sequence = generateSequence(200);
 
     io.to(room).emit("start-game", { sequence });
 
     console.log(`** Game started in room ${room} **`);
   });
+
+  /* PLAYER GAME OVER */
+  socket.on("player-game-over", ({ room }) => {
+    const r = getOrCreateRoom(room);
+
+    r.alive.delete(socket.id);
+
+    console.log(`${r.players[socket.id]?.username} died in room ${room}`);
+
+    checkWinner(r);
+  })
 
   /* LINES CLEARED */
   socket.on("lines-cleared", ({ room, player, count }) => {

@@ -53,6 +53,16 @@ export default function GamePage() {
 			window.applyGarbage(count);
 		})
 
+		socket.on("game-ended", ({ winner }) => {
+			if (winner === window.currentPlayer) {
+				alert("🏆 YOU WIN!");
+			} else {
+				alert(`❌ YOU LOSE\nWinner: ${winner}`);
+			}
+
+			window.location.href = `/multi/join`;
+		});
+
 		return () => socket.disconnect();
 
 	}, [room, player]);

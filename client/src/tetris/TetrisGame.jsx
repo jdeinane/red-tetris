@@ -74,6 +74,14 @@ export default function TetrisGame({ sequence }) {
         if (topRowHasBlocks) {
           setIsGameOver(true);
           setActivePiece(null);
+
+          if (window.socket) {
+            window.socket.emit("player-game-over", {
+              room: window.currentRoom,
+              player: window.currentPlayer,
+            });
+          }
+
           return;
         }
 

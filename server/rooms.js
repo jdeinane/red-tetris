@@ -36,6 +36,7 @@ class Room {
 		this.players = {};
 		this.host = null;
 		this.isGameRunning = false;
+		this.alive = new Set();
 	}
 
 	addPlayer(socketId, username) {
@@ -44,10 +45,13 @@ class Room {
 		// 1st player = host
 		if (!this.host)
 			this.host = socketId;
+
+		this.alive.add(socketId);
 	}
 
 	removePlayer(socketId) {
 		delete this.players[socketId];
+		this.alive.delete(socketId);
 
 		// Reassign host if needed
 		if (socketId === this.host)
