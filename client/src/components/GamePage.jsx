@@ -33,6 +33,11 @@ export default function GamePage() {
 			setSequence(sequence);
 		});
 
+		socket.on("join-denied", () => {
+			alert("Game already started. \nPlease wait for the next round!");
+			window.location.href = "/multi/join";
+		});
+
 		return () => socket.disconnect();
 
 	}, [room, player]);

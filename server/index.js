@@ -37,6 +37,11 @@ io.on("connection", (socket) => {
   socket.on("join-room", ({ room, player }) => {
     const r = getOrCreateRoom(room);
 
+    if (r.isGameRunning) {
+      socket.emit("join-denied", { reason: "game-already-started" });
+      return;
+    }
+
     r.addPlayer(socket.id, player);
     socket.join(room);
 
@@ -64,8 +69,13 @@ io.on("connection", (socket) => {
 
     // Only host can start the game
     if (socket.id !== r.host)
-        return;
+      return;
     
+    if (r.isGameRunning)
+      return;
+
+    r.isGameRunning = true;
+  
     const sequence = generateSequence(200);
 
     io.to(room).emit("start-game", { sequence });
