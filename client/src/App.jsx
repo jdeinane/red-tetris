@@ -1,13 +1,28 @@
+import React from "react";
 import { Routes, Route } from "react-router-dom";
-import GamePage from "./components/GamePage";
 
-function App() {
+import Home from "./components/Home";
+import Play from "./components/Play";
+import Singleplayer from "./components/SinglePlayer";
+import Multiplayer from "./components/Multiplayer";
+import CreateLobby from "./components/CreateLobby";
+import JoinLobby from "./components/JoinLobby";
+import JoinName from "./components/JoinName";
+import GamePage from "./components/GamePage";
+import SingleGame from "./components/SingleGame";
+
+export default function App() {
   return (
     <Routes>
-      <Route path="/:room/:player" element = {<GamePage />} />
-      <Route path="*" element={<h1>Welcome to Pink Tetris</h1>} />
+      <Route path="/" element={<Home />} />
+      <Route path="/play" element={<Play />} />
+      <Route path="/single" element={<Singleplayer />} />
+      <Route path="/game" element={<SingleGame />} />
+      <Route path="/multi" element={<Multiplayer />} />
+      <Route path="/multi/create" element={<CreateLobby />} />
+      <Route path="/multi/join" element={<JoinLobby />} />
+      <Route path="/multi/join/:room" element={<JoinName />} />
+      <Route path="/:room/:player" element={<GamePage />} />
     </Routes>
   );
 }
-
-export default App;

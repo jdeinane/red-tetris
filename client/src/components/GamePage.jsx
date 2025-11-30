@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import TetrisGame from "../tetris/TetrisGame";
-
+import LobbyPage from "./LobbyPage";
 /* Client game page. This file handles:
 	- reads the room's and player's name in the URL
 	- connects to the server
@@ -37,30 +37,9 @@ export default function GamePage() {
 
 	}, [room, player]);
 
-	return (
-		<div>
-			<h1>Room: {room}</h1>
-			<h2>Player {player}</h2>
+	if (!sequence) {
+		return <LobbyPage socket={socket} players={players} />;
+	}
 
-			{players.find(p => p.username === player)?.isHost && (
-				<button
-					onClick={() => socket.emit("start-game", { room })}
-					style={{ padding: "10px", marginBottom: "20px"}}
-					>
-						Start Game
-					</button>
-			)}
-			<h3>Players in room:</h3>
-		<ul>
-		{players.map((p) => (
-			<li key={p.id}>
-			{p.username} {p.isHost ? "(HOST)" : ""}
-			</li>
-		))}
-		</ul>
-		{sequence && (
-			<TetrisGame sequence={sequence} />
-		)}
-		</div>
-	);
+	return <TetrisGame sequence={sequence} />;
 }

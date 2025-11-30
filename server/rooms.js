@@ -35,6 +35,7 @@ class Room {
 		this.name = name;
 		this.players = {};
 		this.host = null;
+		this.isGameRunning = false;
 	}
 
 	addPlayer(socketId, username) {
