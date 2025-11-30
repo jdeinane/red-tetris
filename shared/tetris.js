@@ -210,3 +210,28 @@ export function getGhostPiece(board, piece) {
 	}
 	return ghost;
 }
+
+/* Garbage Line: when a player clears n lines, others receive n - 1 indestructibles
+	lines at the bottom of their board */
+export function addGarbageLines(board, count) {
+	if (count <= 0)
+		return board;
+
+	const rows = board.length;
+	const cols = board[0].length;
+
+	// Clone board
+	const newBoard = board.map((row) => [...row]);
+
+	for (let i = 0; i < count; i++) {
+		newBoard.shift();
+
+		const hole = Math.floor(Math.random() * cols);
+		const garbageRow = Array.from({ length: cols }, (_, x) =>
+		x === hole ? 0 : "G" // "G" = garbage block
+		);
+	newBoard.push(garbageRow);
+	}
+	
+	return newBoard;
+}

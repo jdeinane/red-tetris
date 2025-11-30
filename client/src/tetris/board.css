@@ -35,3 +35,9 @@
   background: rgba(255, 105, 180, 0.2);
   border: 1px dashed rgba(255, 105, 180, 0.3);
 }
+
+/* GARBAGE LINE */
+.cell-G {
+  background: #444;
+  border: 1px solid #222;
+}

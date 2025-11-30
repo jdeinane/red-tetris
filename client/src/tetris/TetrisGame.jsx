@@ -10,6 +10,7 @@ import {
   rotatePiece,
   hardDrop,
   getGhostPiece,
+  addGarbageLines,
 } from "../../../shared/tetris.js";
 
 /* Main game loop */
@@ -59,6 +60,14 @@ export default function TetrisGame({ sequence }) {
       if (result.locked) {
         const newBoard = result.board;
 
+        if (result.clearedLines > 0 && window.socket) {
+          window.socket.emit("lines-cleared", {
+            room: window.currentRoom,
+            player: window.currentPlayer,
+            count: result.clearedLines,
+          });
+        }
+
         setBoard(newBoard);
 
         const topRowHasBlocks = newBoard[0].some((cell) => cell !== 0);
@@ -80,6 +89,17 @@ export default function TetrisGame({ sequence }) {
 
     return () => clearInterval(interval);
   }, [activePiece, board, isGameOver]);
+
+    useEffect(() => {
+      const id = setInterval(() => {
+        if (window.addGarbageCount > 0) {
+          setBoard(prev => addGarbageLines(prev, window.addGarbageCount));
+          window.addGarbageCount = 0;
+        }
+      }, 50);
+
+      return () => clearInterval(id);
+    }, []);
 
   // HOLD
   function handleHold() {

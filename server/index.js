@@ -82,6 +82,25 @@ io.on("connection", (socket) => {
 
     console.log(`** Game started in room ${room} **`);
   });
+
+  /* LINES CLEARED */
+  socket.on("lines-cleared", ({ room, player, count }) => {
+    const r = getOrCreateRoom(room);
+
+    if (!r.isGameRunning)
+      return;
+
+    const garbage = Math.max(0, count - 1);
+    if (garbage <= 0)
+      return;
+
+    console.log(`${player} cleared ${count} lines → sending ${garbage} garbage`);
+
+    socket.to(room).emit("garbage", {
+      from: player,
+      count: garbage,
+    });
+  });
 });
 
 server.listen(3000, () =>

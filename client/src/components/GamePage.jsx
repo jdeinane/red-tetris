@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import TetrisGame from "../tetris/TetrisGame";
 import LobbyPage from "./LobbyPage";
+
+
 /* Client game page. This file handles:
 	- reads the room's and player's name in the URL
 	- connects to the server
@@ -20,7 +22,15 @@ export default function GamePage() {
 	useEffect(() => {
 		socket = io("http://localhost:3000");
 
+		window.socket = socket;
+		window.currentRoom = room;
+		window.currentPlayer = player;
+
 		socket.emit("join-room", { room, player });
+		
+		window.applyGarbage = (count) => {
+			window.addGarbageCount = count;
+		};
 
 		socket.on("room-players", (data) => {
 			setPlayers(data);
@@ -37,6 +47,11 @@ export default function GamePage() {
 			alert("Game already started. \nPlease wait for the next round!");
 			window.location.href = "/multi/join";
 		});
+
+		socket.on("garbage", ({ from, count }) => {
+			console.log(`Received ${count} garbage from ${from}`);
+			window.applyGarbage(count);
+		})
 
 		return () => socket.disconnect();
 
