@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import Board from "./Board";
 import NextPiece from "./NextPiece";
 import HoldPiece from "./HoldPiece";
+import { getSpectrum } from "../../../shared/tetris.js";
+import SpectrumView from "../components/SpectrumView.jsx";
+
 import {
   createEmptyBoard,
   createPiece,
@@ -15,7 +18,7 @@ import {
 
 /* Main game loop */
 
-export default function TetrisGame({ sequence }) {
+export default function TetrisGame({ sequence, spectrums }) {
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
@@ -98,16 +101,34 @@ export default function TetrisGame({ sequence }) {
     return () => clearInterval(interval);
   }, [activePiece, board, isGameOver]);
 
-    useEffect(() => {
-      const id = setInterval(() => {
-        if (window.addGarbageCount > 0) {
-          setBoard(prev => addGarbageLines(prev, window.addGarbageCount));
-          window.addGarbageCount = 0;
-        }
-      }, 50);
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (window.addGarbageCount > 0) {
+        setBoard(prev => addGarbageLines(prev, window.addGarbageCount));
+        window.addGarbageCount = 0;
+      }
+    }, 50);
 
-      return () => clearInterval(id);
-    }, []);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!window.socket || isGameOver)
+          return;
+
+      const spectrum = getSpectrum(board);
+
+      window.socket.emit("spectrum-update", {
+        room: window.currentRoom,
+        player: window.currentPlayer,
+        spectrum,
+      });
+    }, 300);
+
+    return () => clearInterval(id);
+  }, [board, isGameOver]);
+
 
   // HOLD
   function handleHold() {
@@ -162,6 +183,7 @@ export default function TetrisGame({ sequence }) {
   }
 
   const nextType = index < sequence.length ? sequence[index] : null;
+  const spectrumEntries = Object.entries(spectrums || {});
 
   return (
     <div
@@ -185,6 +207,13 @@ export default function TetrisGame({ sequence }) {
 
       {/* NEXT */}
       <NextPiece type={nextType} />
+
+      {/* SPECTRUM */}
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {spectrumEntries.map(([name, spect]) => (
+          <SpectrumView key={name} name={name} spectrum={spect} />
+        ))}
+      </div>
 
       {/* GAME OVER UI */}
       {isGameOver && (

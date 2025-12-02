@@ -118,6 +118,18 @@ io.on("connection", (socket) => {
     checkWinner(r);
   })
 
+  /* SPECTRUM UPDATE */
+  socket.on("spectrum-update", ({ room, player, spectrum }) => {
+    const r = getOrCreateRoom(room);
+    if (!r.isGameRunning)
+      return;
+
+    socket.to(room).emit("spectrum", {
+      from: player,
+      spectrum,
+    });
+  });
+
   /* LINES CLEARED */
   socket.on("lines-cleared", ({ room, player, count }) => {
     const r = getOrCreateRoom(room);

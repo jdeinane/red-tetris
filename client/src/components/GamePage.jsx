@@ -18,6 +18,7 @@ export default function GamePage() {
 	const { room, player } = useParams();
 	const [players, setPlayers] = useState([]);
 	const [sequence, setSequence] = useState(null);
+	const [spectrums, setSpectrums] = useState({});
 
 	useEffect(() => {
 		socket = io("http://localhost:3000");
@@ -51,7 +52,7 @@ export default function GamePage() {
 		socket.on("garbage", ({ from, count }) => {
 			console.log(`Received ${count} garbage from ${from}`);
 			window.applyGarbage(count);
-		})
+		});
 
 		socket.on("game-ended", ({ winner }) => {
 			if (winner === window.currentPlayer) {
@@ -63,6 +64,13 @@ export default function GamePage() {
 			window.location.href = `/multi/join`;
 		});
 
+		socket.on("spectrum", ({ from, spectrum }) => {
+			setSpectrums(prev => ({
+				...prev,
+				[from]: spectrum,
+			}));
+		});
+
 		return () => socket.disconnect();
 
 	}, [room, player]);
@@ -71,5 +79,5 @@ export default function GamePage() {
 		return <LobbyPage socket={socket} players={players} />;
 	}
 
-	return <TetrisGame sequence={sequence} />;
+	return <TetrisGame sequence={sequence} spectrums={spectrums} />;
 }

@@ -1,7 +1,6 @@
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants.js";
 import { PIECE_SHAPES } from "./pieces.js";
 
-
 /* Board helpers: 
 	- creates a 20x10 grid
 	- fills it with 0 (empty) */
@@ -234,4 +233,21 @@ export function addGarbageLines(board, count) {
 	}
 	
 	return newBoard;
+}
+
+/* Board Spectrum: returns an array of 10 numbers
+	representing the height of each column */
+export function getSpectrum(board) {
+	const cols = board[0].length;
+	const heights = Array(cols).fill(0);
+
+	for (let c = 0; c < cols; c++) {
+		for (let r = 0; r < board.length; r++) {
+			if (board[r][c] !== 0) {
+				heights[c] = board.length - r;
+				break;
+			}
+		}
+	}
+	return heights;
 }
