@@ -1,3 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  font-family: 'Press Start 2P', monospace;
+  color-scheme: dark;
+  color: #fff;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -8,11 +16,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Press Start 2P', monospace;
-  color: #fff;
 }
 
-/* DARK TRANSLUCENT OVERLAY FOR READABILITY */
 .page-container {
   width: 100%;
   min-height: 100vh;
@@ -23,9 +28,8 @@ body {
   align-items: center;
 }
 
-/* NEON CYBERPUNK PANEL */
 .content-box {
-  background: rgba(20, 20, 35, 0.8);
+  background: rgba(20, 20, 35, 0.82);
   padding: 40px;
   border-radius: 12px;
   width: 350px;
@@ -34,24 +38,26 @@ body {
   box-shadow:
     0 0 20px rgba(255, 0, 255, 0.4),
     0 0 50px rgba(0, 200, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-/* TITLE */
 .title {
-  font-size: 28px;
-  margin-bottom: 30px;
-  text-shadow: 0 0 10px #ff00ff, 0 0 20px #00eaff;
+  font-size: 26px;
+  text-shadow:
+    0 0 10px #ff00ff,
+    0 0 20px #00eaff,
+    0 0 40px #ff00ff;
 }
 
-/* NEON INPUTS */
 .form-input {
   width: 100%;
   padding: 12px;
   font-size: 14px;
-  margin-bottom: 15px;
   border-radius: 6px;
   border: 2px solid rgba(255, 0, 255, 0.5);
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   color: white;
   outline: none;
 }
@@ -60,37 +66,47 @@ body {
   box-shadow: 0 0 10px #ff00ff;
 }
 
-/* NEON BUTTONS */
 .form-button {
   width: 100%;
   padding: 12px;
-  margin-top: 10px;
   background: linear-gradient(90deg, #ff00ff, #00eaff);
   border: none;
   border-radius: 8px;
   color: white;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s ease;
   text-shadow: 0 0 4px #000;
-  box-shadow:
-    0 0 10px rgba(255, 0, 255, 0.4),
-    0 0 20px rgba(0, 200, 255, 0.3);
+  transition:
+    transform 0.12s ease,
+    padding 0.12s ease,
+    filter 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .form-button:hover:not(:disabled) {
-  transform: scale(1.05);
+  transform: scale(1.06);
+  padding: 13px;
   box-shadow:
     0 0 20px rgba(255, 0, 255, 0.6),
     0 0 35px rgba(0, 200, 255, 0.5);
 }
 
+.form-button:active:not(:disabled) {
+  transform: scale(0.94);
+  padding: 11px;
+  filter: brightness(0.85);
+  box-shadow:
+    0 0 10px rgba(255, 0, 255, 0.3),
+    0 0 15px rgba(0, 200, 255, 0.2);
+}
+
 .form-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
+  padding: 12px;
 }
 
-/* LIST OF PLAYERS IN LOBBY */
 .player-list li {
   margin: 6px 0;
   padding: 6px;
@@ -98,4 +114,22 @@ body {
   border-radius: 6px;
   border: 1px solid rgba(255, 0, 255, 0.3);
   text-shadow: 0 0 4px #000;
+}
+
+.max-players-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.max-players-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.max-players-buttons .form-button.selected {
+  box-shadow:
+    0 0 15px rgba(255, 0, 255, 0.9),
+    0 0 25px rgba(0, 200, 255, 0.8);
 }
