@@ -209,8 +209,15 @@ export default function TetrisGame({ sequence, spectrums }) {
       <NextPiece type={nextType} />
 
       {/* SPECTRUM */}
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {spectrumEntries.map(([name, spect]) => (
+      <div style={{
+        position: "absolute",
+        right: "-150px",
+        top: "20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px"
+      }}>
+        {Object.entries(spectrums).map(([name, spect]) => (
           <SpectrumView key={name} name={name} spectrum={spect} />
         ))}
       </div>
