@@ -21,13 +21,14 @@ export function createPiece(type) {
 	}
 
 	const width = shape[0].length;
-	const startX = Math.floor(BOARD_WIDTH / 2) - Math.ceil(width / 2);
+	const defaultX = Math.floor(BOARD_WIDTH / 2) - Math.ceil(width / 2);
+	const spawn = window.spawnOverride || { x: defaultX, y: 0};
 
 	return {
 		type,
 		shape,
-		x: startX,
-		y: 0,
+		x: spawn.x,
+		y: spawn.y,
 	};
 }
 

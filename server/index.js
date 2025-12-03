@@ -3,7 +3,6 @@ import http from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import Piece from "./Piece.js";
 import { getOrCreateGame, removeEmptyGame } from "./Game.js";
 import { generateSequence } from "../shared/pieces.js";
 
@@ -101,7 +100,10 @@ io.on("connection", (socket) => {
 
     const sequence = generateSequence(200);
 
-    io.to(room).emit("start-game", { sequence });
+    io.to(room).emit("start-game", { 
+		sequence,
+		spawn: { x: 3, y: 0 }
+	});
 
     console.log(`** Game started in room ${room} **`);
   });

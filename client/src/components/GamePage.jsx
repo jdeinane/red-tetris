@@ -9,7 +9,6 @@ function generateLocalSequence() {
 	return generateSequence(200);
 }
 
-
 /* Client game page. This file handles:
 	- reads the room's and player's name in the URL
 	- connects to the server
@@ -32,6 +31,7 @@ export default function GamePage() {
 			return;
 		}
 
+		window.spawnOverride = null;
 		socket = io("http://localhost:3000");
 
 		window.socket = socket;
@@ -44,7 +44,8 @@ export default function GamePage() {
 			setPlayers(data);
 		});
 
-		socket.on("start-game", ({ sequence }) => {
+		socket.on("start-game", ({ sequence, spawn }) => {
+			window.spawnOverride = spawn;
 			console.log("** Game started! ***");
 			console.log("Sequence:", sequence);
 
