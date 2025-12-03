@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import Board from "./Board";
 import NextPiece from "./NextPiece";
 import HoldPiece from "./HoldPiece";
+import SpectrumView from "../components/SpectrumView.jsx";
+
 import {
   createEmptyBoard,
   createPiece,
@@ -9,12 +11,13 @@ import {
   rotatePiece,
   hardDrop,
   getGhostPiece,
-  tick,
   mergePiece,
-  clearLines
+  clearLines,
+  addGarbageLines,
+  getSpectrum,
 } from "../../../shared/tetris.js";
 
-export default function TetrisGame({ sequence }) {
+export default function TetrisGame({ sequence, spectrums = {} }) {
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
@@ -33,7 +36,7 @@ export default function TetrisGame({ sequence }) {
     left: false,
     right: false,
     down: false,
-    rotateHeld: false
+    rotateHeld: false,
   });
 
   const rotateTimeoutRef = useRef(null);
@@ -46,9 +49,11 @@ export default function TetrisGame({ sequence }) {
   const fallInterval = 500;
   const lockDelay = 350;
 
+  const garbageRef = useRef(0);
+
   function syncBoard(newBoard) {
     boardRef.current = newBoard;
-    setBoard(newBoard.map(r => [...r]));
+    setBoard(newBoard.map((r) => [...r]));
   }
 
   function syncPiece(p) {
@@ -63,7 +68,8 @@ export default function TetrisGame({ sequence }) {
         if (!shape[r][c]) continue;
         const nx = x + c;
         const ny = y + r;
-        if (nx < 0 || nx >= board[0].length || ny < 0 || ny >= board.length) return true;
+        if (nx < 0 || nx >= board[0].length || ny < 0 || ny >= board.length)
+          return true;
         if (board[ny][nx]) return true;
       }
     }
@@ -95,8 +101,31 @@ export default function TetrisGame({ sequence }) {
     lockStartRef.current = null;
   }
 
+  function notifyLinesCleared(clearedLines) {
+    if (!clearedLines) return;
+    if (!window.socket) return;
+
+    window.socket.emit("lines-cleared", {
+      room: window.currentRoom,
+      player: window.currentPlayer,
+      count: clearedLines,
+    });
+  }
+
+  function notifyGameOver() {
+    if (!window.socket) return;
+
+    window.socket.emit("player-game-over", {
+      room: window.currentRoom,
+      player: window.currentPlayer,
+    });
+  }
+
+  // --- HOLD ---
+
   function handleHold() {
-    if (!pieceRef.current || !canHoldRef.current || isGameOverRef.current) return;
+    if (!pieceRef.current || !canHoldRef.current || isGameOverRef.current)
+      return;
     if (holdTypeRef.current === null) {
       holdTypeRef.current = pieceRef.current.type;
       setHoldType(holdTypeRef.current);
@@ -113,20 +142,33 @@ export default function TetrisGame({ sequence }) {
     lockStartRef.current = null;
   }
 
+  // --- HARD DROP ---
+
   function handleHardDrop() {
     if (!pieceRef.current || isGameOverRef.current) return;
+
     const dropped = hardDrop(boardRef.current, pieceRef.current);
     const withPiece = mergePiece(boardRef.current, dropped);
-    const { board: cleaned } = clearLines(withPiece);
+
+    const clearResult = clearLines(withPiece);
+    const cleaned = clearResult.board;
+    const clearedLines = clearResult.clearedLines || 0;
+
+    notifyLinesCleared(clearedLines);
+
     syncBoard(cleaned);
     syncPiece(null);
     canHoldRef.current = true;
     lockStartRef.current = null;
-    if (cleaned[0].some(c => c !== 0)) {
+
+    if (cleaned[0].some((c) => c !== 0)) {
       isGameOverRef.current = true;
       setIsGameOver(true);
+      notifyGameOver();
     }
   }
+
+  // --- AUTO MOVE gauche/droite ---
 
   function startAutoMove(direction) {
     clearTimeout(moveTimeoutRef.current);
@@ -149,6 +191,7 @@ export default function TetrisGame({ sequence }) {
     }, 150);
   }
 
+
   useEffect(() => {
     function rotateOnce() {
       if (!pieceRef.current || isGameOverRef.current) return;
@@ -167,13 +210,6 @@ export default function TetrisGame({ sequence }) {
           rotateOnce();
         }, 90);
       }, 150);
-    }
-
-    function stopRotate() {
-      clearTimeout(rotateTimeoutRef.current);
-      clearInterval(rotateRepeatRef.current);
-      rotateTimeoutRef.current = null;
-      rotateRepeatRef.current = null;
     }
 
     function onKeyDown(e) {
@@ -206,12 +242,9 @@ export default function TetrisGame({ sequence }) {
     }
 
     function onKeyUp(e) {
-      if (e.key === "ArrowLeft") {
-        keyStateRef.current.left = false;
-        clearTimeout(moveTimeoutRef.current);
-        clearInterval(moveRepeatRef.current);
-      } else if (e.key === "ArrowRight") {
-        keyStateRef.current.right = false;
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (e.key === "ArrowLeft") keyStateRef.current.left = false;
+        if (e.key === "ArrowRight") keyStateRef.current.right = false;
         clearTimeout(moveTimeoutRef.current);
         clearInterval(moveRepeatRef.current);
       } else if (e.key === "ArrowDown") {
@@ -232,6 +265,8 @@ export default function TetrisGame({ sequence }) {
   }, []);
 
   useEffect(() => {
+    if (!sequence || isGameOverRef.current) return;
+
     let lastFall = performance.now();
 
     function loop() {
@@ -251,14 +286,21 @@ export default function TetrisGame({ sequence }) {
           if (lockStartRef.current === null) lockStartRef.current = now;
           else if (now - lockStartRef.current >= lockDelay) {
             const merged = mergePiece(boardRef.current, p);
-            const { board: cleaned } = clearLines(merged);
+            const clearResult = clearLines(merged);
+            const cleaned = clearResult.board;
+            const clearedLines = clearResult.clearedLines || 0;
+
+            notifyLinesCleared(clearedLines);
+
             syncBoard(cleaned);
             syncPiece(null);
             canHoldRef.current = true;
             lockStartRef.current = null;
-            if (cleaned[0].some(c => c !== 0)) {
+
+            if (cleaned[0].some((c) => c !== 0)) {
               isGameOverRef.current = true;
               setIsGameOver(true);
+              notifyGameOver();
             }
           }
         } else {
@@ -272,7 +314,49 @@ export default function TetrisGame({ sequence }) {
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [sequence]);
+  }, [sequence, isGameOver]);
+
+
+  useEffect(() => {
+    function handleGarbage(e) {
+      garbageRef.current += e.detail;
+    }
+
+    window.addEventListener("add-garbage", handleGarbage);
+    return () => window.removeEventListener("add-garbage", handleGarbage);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (garbageRef.current > 0) {
+        const updated = addGarbageLines(
+          boardRef.current,
+          garbageRef.current
+        );
+        garbageRef.current = 0;
+        syncBoard(updated);
+      }
+    }, 50);
+
+    return () => clearInterval(id);
+  }, []);
+
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!window.socket || isGameOverRef.current) return;
+
+      const spectrum = getSpectrum(boardRef.current);
+
+      window.socket.emit("spectrum-update", {
+        room: window.currentRoom,
+        player: window.currentPlayer,
+        spectrum,
+      });
+    }, 300);
+
+    return () => clearInterval(id);
+  }, []);
 
   function restartGame() {
     const empty = createEmptyBoard();
@@ -290,7 +374,7 @@ export default function TetrisGame({ sequence }) {
       left: false,
       right: false,
       down: false,
-      rotateHeld: false
+      rotateHeld: false,
     };
   }
 
@@ -299,6 +383,8 @@ export default function TetrisGame({ sequence }) {
       ? sequence[indexRef.current]
       : null;
 
+  const safeSpectrums = spectrums || {};
+
   return (
     <div
       style={{
@@ -306,10 +392,13 @@ export default function TetrisGame({ sequence }) {
         flexDirection: "row",
         justifyContent: "center",
         gap: "40px",
-        position: "relative"
+        position: "relative",
       }}
     >
+      {/* HOLD */}
       <HoldPiece type={holdType} />
+
+      {/* BOARD */}
       <Board
         board={board}
         activePiece={activePiece}
@@ -317,8 +406,27 @@ export default function TetrisGame({ sequence }) {
           activePiece ? getGhostPiece(board, activePiece) : null
         }
       />
+
+      {/* NEXT */}
       <NextPiece type={nextType} />
 
+      {/* SPECTRUM (autres joueurs) */}
+      <div
+        style={{
+          position: "absolute",
+          right: "-150px",
+          top: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
+        {Object.entries(safeSpectrums).map(([name, spect]) => (
+          <SpectrumView key={name} name={name} spectrum={spect} />
+        ))}
+      </div>
+
+      {/* GAME OVER UI */}
       {isGameOver && (
         <div
           style={{
@@ -326,13 +434,13 @@ export default function TetrisGame({ sequence }) {
             top: "35%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(0, 0, 0, 0.85)",
             padding: "40px",
             color: "white",
             borderRadius: "12px",
             textAlign: "center",
             fontSize: "32px",
-            width: "300px"
+            width: "300px",
           }}
         >
           <h1>GAME OVER</h1>
@@ -345,7 +453,7 @@ export default function TetrisGame({ sequence }) {
               background: "#ff69b4",
               color: "white",
               border: "none",
-              borderRadius: "8px"
+              borderRadius: "8px",
             }}
           >
             Restart
