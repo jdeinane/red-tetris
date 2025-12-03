@@ -147,16 +147,25 @@ export function clearLines(board) {
 	let cleared = 0;
 
 	for (let y = 0; y < BOARD_HEIGHT; y++) {
-		if (board[y].every((cell) => cell !== 0)) {
-			cleared++;
-		} else {
-			newBoard.push([...board[y]]);
+		const row = board[y];
+		const isGarbageRow = row.includes("G");
+		const isFull = row.every((cell) => cell !== 0);
+
+		if (isGarbageRow) {
+			newBoard.push([...row]);
+			continue;
 		}
+
+		if (isFull) {
+			cleared++;
+			continue;
+		}
+
+		newBoard.push([...row]);
 	}
 
-	while (newBoard.length < BOARD_HEIGHT) {
+	while (newBoard.length < BOARD_HEIGHT)
 		newBoard.unshift(Array(BOARD_WIDTH).fill(0));
-	}
 
 	return { board: newBoard, clearedLines: cleared };
 }
@@ -229,9 +238,11 @@ export function addGarbageLines(board, count) {
 		const garbageRow = Array.from({ length: cols }, (_, x) =>
 		x === hole ? 0 : "G" // "G" = garbage block
 		);
-	newBoard.push(garbageRow);
+
+		console.log("Garbage row added:", garbageRow); // DEBUG
+		newBoard.push(garbageRow);
 	}
-	
+
 	return newBoard;
 }
 

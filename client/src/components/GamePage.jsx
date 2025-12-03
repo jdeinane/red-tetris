@@ -3,6 +3,11 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import TetrisGame from "../tetris/TetrisGame";
 import LobbyPage from "./LobbyPage";
+import { generateSequence } from "../../../shared/pieces.js";
+
+function generateLocalSequence() {
+	return generateSequence(200);
+}
 
 
 /* Client game page. This file handles:
@@ -16,11 +21,17 @@ let socket;
 
 export default function GamePage() {
 	const { room, player } = useParams();
+	const isSolo = !room || !player;
 	const [players, setPlayers] = useState([]);
 	const [sequence, setSequence] = useState(null);
 	const [spectrums, setSpectrums] = useState({});
 
 	useEffect(() => {
+		if (isSolo) {
+			setSequence(generateLocalSequence());
+			return;
+		}
+
 		socket = io("http://localhost:3000");
 
 		window.socket = socket;
@@ -28,10 +39,6 @@ export default function GamePage() {
 		window.currentPlayer = player;
 
 		socket.emit("join-room", { room, player });
-		
-		window.applyGarbage = (count) => {
-			window.addGarbageCount = count;
-		};
 
 		socket.on("room-players", (data) => {
 			setPlayers(data);
@@ -51,7 +58,9 @@ export default function GamePage() {
 
 		socket.on("garbage", ({ from, count }) => {
 			console.log(`Received ${count} garbage from ${from}`);
-			window.applyGarbage(count);
+			window.dispatchEvent(new CustomEvent("add-garbage", {
+				detail:count
+			}));
 		});
 
 		socket.on("game-ended", ({ winner }) => {
@@ -76,8 +85,14 @@ export default function GamePage() {
 	}, [room, player]);
 
 	if (!sequence) {
+		if (isSolo) return <div>Loading solo mode…</div>;
 		return <LobbyPage socket={socket} players={players} />;
 	}
 
-	return <TetrisGame sequence={sequence} spectrums={spectrums} />;
+	return (
+		<TetrisGame
+		sequence={sequence}
+		spectrums={isSolo ? {} : spectrums}
+		/>
+	);
 }
