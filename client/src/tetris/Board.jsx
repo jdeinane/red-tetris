@@ -42,7 +42,7 @@ export default function Board({ board, activePiece, ghostPiece }) {
           gy < displayBoard.length &&
           gx >= 0 &&
           gx < displayBoard[0].length &&
-          board[gy][gx] === 0            // ❗ ghost only on EMPTY CELLS
+          !displayBoard[gy][gx]
         ) {
           displayBoard[gy][gx] = "ghost";
         }
