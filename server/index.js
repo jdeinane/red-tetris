@@ -3,9 +3,8 @@ import http from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-
-import { getOrCreateRoom, removeEmptyRoom } from "./rooms.js";
-import Player from "./Player.js";
+import Piece from "./Piece.js";
+import { getOrCreateGame, removeEmptyGame } from "./Game.js";
 import { generateSequence } from "../shared/pieces.js";
 
 /*   This file contains the heart of the server, it handles:
@@ -58,7 +57,7 @@ io.on("connection", (socket) => {
 
   /* JOIN ROOM */
   socket.on("join-room", ({ room, player }) => {
-    const r = getOrCreateRoom(room);
+    const r = getOrCreateGame(room);
 
     if (r.isGameRunning) {
       socket.emit("join-denied", { reason: "game-already-started" });
@@ -78,7 +77,7 @@ io.on("connection", (socket) => {
     console.log("🔴 Disconnected:", socket.id);
 
     // Remove player from its room
-    const room = removeEmptyRoom(socket.id);
+    const room = removeEmptyGame(socket.id);
 
     if (room) {
       checkWinner(room);
@@ -88,7 +87,7 @@ io.on("connection", (socket) => {
 
   /* START GAME */
   socket.on("start-game", ({ room }) => {
-    const r = getOrCreateRoom(room);
+    const r = getOrCreateGame(room);
 
     // Only host can start the game
     if (socket.id !== r.host)
@@ -109,7 +108,7 @@ io.on("connection", (socket) => {
 
   /* PLAYER GAME OVER */
   socket.on("player-game-over", ({ room }) => {
-    const r = getOrCreateRoom(room);
+    const r = getOrCreateGame(room);
 
     r.alive.delete(socket.id);
 
@@ -120,7 +119,7 @@ io.on("connection", (socket) => {
 
   /* SPECTRUM UPDATE */
   socket.on("spectrum-update", ({ room, player, spectrum }) => {
-    const r = getOrCreateRoom(room);
+    const r = getOrCreateGame(room);
     if (!r.isGameRunning)
       return;
 
@@ -132,7 +131,7 @@ io.on("connection", (socket) => {
 
   /* LINES CLEARED */
   socket.on("lines-cleared", ({ room, player, count }) => {
-    const r = getOrCreateRoom(room);
+    const r = getOrCreateGame(room);
 
     if (!r.isGameRunning)
       return;
