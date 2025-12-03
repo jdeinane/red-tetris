@@ -49,6 +49,7 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
   const fallInterval = 500;
   const lockDelay = 350;
 
+  // pour les garbage lines envoyées par les autres joueurs
   const garbageRef = useRef(0);
 
   function syncBoard(newBoard) {
@@ -100,6 +101,8 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
     syncPiece(createPiece(type));
     lockStartRef.current = null;
   }
+
+  // --- réseau : notification lignes + game over ---
 
   function notifyLinesCleared(clearedLines) {
     if (!clearedLines) return;
@@ -191,6 +194,7 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
     }, 150);
   }
 
+  // --- clavier: déplacement + rotate delay ---
 
   useEffect(() => {
     function rotateOnce() {
@@ -264,6 +268,8 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
     };
   }, []);
 
+  // --- boucle de jeu (gravity + lock delay) ---
+
   useEffect(() => {
     if (!sequence || isGameOverRef.current) return;
 
@@ -316,6 +322,7 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [sequence, isGameOver]);
 
+  // --- garbage lines reçues (event "add-garbage") ---
 
   useEffect(() => {
     function handleGarbage(e) {
@@ -341,6 +348,7 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
     return () => clearInterval(id);
   }, []);
 
+  // --- envoi périodique du spectrum au serveur ---
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -357,6 +365,8 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
 
     return () => clearInterval(id);
   }, []);
+
+  // --- restart ---
 
   function restartGame() {
     const empty = createEmptyBoard();

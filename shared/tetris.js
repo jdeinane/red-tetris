@@ -1,7 +1,6 @@
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants.js";
 import { PIECE_SHAPES } from "./pieces.js";
 
-
 /* Board helpers: 
 	- creates a 20x10 grid
 	- fills it with 0 (empty) */
@@ -22,13 +21,14 @@ export function createPiece(type) {
 	}
 
 	const width = shape[0].length;
-	const startX = Math.floor(BOARD_WIDTH / 2) - Math.ceil(width / 2);
+	const defaultX = Math.floor(BOARD_WIDTH / 2) - Math.ceil(width / 2);
+	const spawn = window.spawnOverride || { x: defaultX, y: 0};
 
 	return {
 		type,
 		shape,
-		x: startX,
-		y: 0,
+		x: spawn.x,
+		y: spawn.y,
 	};
 }
 
@@ -148,16 +148,25 @@ export function clearLines(board) {
 	let cleared = 0;
 
 	for (let y = 0; y < BOARD_HEIGHT; y++) {
-		if (board[y].every((cell) => cell !== 0)) {
-			cleared++;
-		} else {
-			newBoard.push([...board[y]]);
+		const row = board[y];
+		const isGarbageRow = row.includes("G");
+		const isFull = row.every((cell) => cell !== 0);
+
+		if (isGarbageRow) {
+			newBoard.push([...row]);
+			continue;
 		}
+
+		if (isFull) {
+			cleared++;
+			continue;
+		}
+
+		newBoard.push([...row]);
 	}
 
-	while (newBoard.length < BOARD_HEIGHT) {
+	while (newBoard.length < BOARD_HEIGHT)
 		newBoard.unshift(Array(BOARD_WIDTH).fill(0));
-	}
 
 	return { board: newBoard, clearedLines: cleared };
 }
@@ -230,8 +239,27 @@ export function addGarbageLines(board, count) {
 		const garbageRow = Array.from({ length: cols }, (_, x) =>
 		x === hole ? 0 : "G" // "G" = garbage block
 		);
-	newBoard.push(garbageRow);
+
+		console.log("Garbage row added:", garbageRow); // DEBUG
+		newBoard.push(garbageRow);
 	}
-	
+
 	return newBoard;
+}
+
+/* Board Spectrum: returns an array of 10 numbers
+	representing the height of each column */
+export function getSpectrum(board) {
+	const cols = board[0].length;
+	const heights = Array(cols).fill(0);
+
+	for (let c = 0; c < cols; c++) {
+		for (let r = 0; r < board.length; r++) {
+			if (board[r][c] !== 0) {
+				heights[c] = board.length - r;
+				break;
+			}
+		}
+	}
+	return heights;
 }
