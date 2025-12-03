@@ -1,167 +1,303 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Board from "./Board";
 import NextPiece from "./NextPiece";
 import HoldPiece from "./HoldPiece";
 import {
   createEmptyBoard,
   createPiece,
-  tick,
   movePiece,
   rotatePiece,
   hardDrop,
   getGhostPiece,
-  addGarbageLines,
+  tick,
+  mergePiece,
+  clearLines
 } from "../../../shared/tetris.js";
-
-/* Main game loop */
 
 export default function TetrisGame({ sequence }) {
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [inputLocked, setInputLocked] = useState(false);
-
-  // HOLD
   const [holdType, setHoldType] = useState(null);
-  const [canHold, setCanHold] = useState(true);
+
+  const boardRef = useRef(board);
+  const pieceRef = useRef(null);
+  const indexRef = useRef(0);
+  const isGameOverRef = useRef(false);
+  const holdTypeRef = useRef(null);
+  const canHoldRef = useRef(true);
+  const lockStartRef = useRef(null);
+
+  const keyStateRef = useRef({
+    left: false,
+    right: false,
+    down: false,
+    rotateHeld: false
+  });
+
+  const rotateTimeoutRef = useRef(null);
+  const rotateRepeatRef = useRef(null);
+
+  const moveTimeoutRef = useRef(null);
+  const moveRepeatRef = useRef(null);
+
+  const rafRef = useRef(null);
+  const fallInterval = 500;
+  const lockDelay = 350;
+
+  function syncBoard(newBoard) {
+    boardRef.current = newBoard;
+    setBoard(newBoard.map(r => [...r]));
+  }
+
+  function syncPiece(p) {
+    pieceRef.current = p;
+    setActivePiece(p);
+  }
+
+  function collision(board, piece) {
+    const { shape, x, y } = piece;
+    for (let r = 0; r < shape.length; r++) {
+      for (let c = 0; c < shape[r].length; c++) {
+        if (!shape[r][c]) continue;
+        const nx = x + c;
+        const ny = y + r;
+        if (nx < 0 || nx >= board[0].length || ny < 0 || ny >= board.length) return true;
+        if (board[ny][nx]) return true;
+      }
+    }
+    return false;
+  }
+
+  function tryRotate(board, piece) {
+    const rotated = rotatePiece(board, piece);
+    if (rotated === piece) return piece;
+    if (!collision(board, rotated)) return rotated;
+    const right = { ...rotated, x: rotated.x + 1 };
+    if (!collision(board, right)) return right;
+    const left = { ...rotated, x: rotated.x - 1 };
+    if (!collision(board, left)) return left;
+    return piece;
+  }
 
   function spawnPiece() {
-    if (!sequence) return;
-
-    if (index >= sequence.length) {
+    if (!sequence || isGameOverRef.current) return;
+    if (indexRef.current >= sequence.length) {
+      isGameOverRef.current = true;
       setIsGameOver(true);
       return;
     }
-
-    const nextType = sequence[index];
-    const newPiece = createPiece(nextType);
-
-    setActivePiece(newPiece);
-    setIndex((i) => i + 1);
+    const type = sequence[indexRef.current];
+    indexRef.current += 1;
+    setIndex(indexRef.current);
+    syncPiece(createPiece(type));
+    lockStartRef.current = null;
   }
 
-  useEffect(() => {
-    if (!sequence || isGameOver) return;
-
-    if (!activePiece) {
-      spawnPiece();
-    }
-  }, [activePiece, sequence, isGameOver, index]);
-
-  useEffect(() => {
-    if (isGameOver) return;
-
-    const interval = setInterval(() => {
-      if (!activePiece) return;
-
-      const result = tick(board, activePiece);
-
-      if (result.locked) {
-        const newBoard = result.board;
-
-        if (result.clearedLines > 0 && window.socket) {
-          window.socket.emit("lines-cleared", {
-            room: window.currentRoom,
-            player: window.currentPlayer,
-            count: result.clearedLines,
-          });
-        }
-
-        setBoard(newBoard);
-
-        const topRowHasBlocks = newBoard[0].some((cell) => cell !== 0);
-        if (topRowHasBlocks) {
-          setIsGameOver(true);
-          setActivePiece(null);
-
-          if (window.socket) {
-            window.socket.emit("player-game-over", {
-              room: window.currentRoom,
-              player: window.currentPlayer,
-            });
-          }
-
-          return;
-        }
-
-        setInputLocked(true);
-        setActivePiece(null);
-        setTimeout(() => setInputLocked(false), 50);
-
-        setCanHold(true);
-      } else {
-        setActivePiece(result.activePiece);
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [activePiece, board, isGameOver]);
-
-    useEffect(() => {
-      const id = setInterval(() => {
-        if (window.addGarbageCount > 0) {
-          setBoard(prev => addGarbageLines(prev, window.addGarbageCount));
-          window.addGarbageCount = 0;
-        }
-      }, 50);
-
-      return () => clearInterval(id);
-    }, []);
-
-  // HOLD
   function handleHold() {
-    if (!activePiece || !canHold || isGameOver) return;
-
-    setCanHold(false);
-
-    if (holdType === null) {
-      setHoldType(activePiece.type);
-      setActivePiece(null);
-      spawnPiece();
+    if (!pieceRef.current || !canHoldRef.current || isGameOverRef.current) return;
+    if (holdTypeRef.current === null) {
+      holdTypeRef.current = pieceRef.current.type;
+      setHoldType(holdTypeRef.current);
+      syncPiece(null);
+      canHoldRef.current = false;
+      lockStartRef.current = null;
       return;
     }
+    const swapped = createPiece(holdTypeRef.current);
+    holdTypeRef.current = pieceRef.current.type;
+    setHoldType(holdTypeRef.current);
+    syncPiece(swapped);
+    canHoldRef.current = false;
+    lockStartRef.current = null;
+  }
 
-    const swappedPiece = createPiece(holdType);
+  function handleHardDrop() {
+    if (!pieceRef.current || isGameOverRef.current) return;
+    const dropped = hardDrop(boardRef.current, pieceRef.current);
+    const withPiece = mergePiece(boardRef.current, dropped);
+    const { board: cleaned } = clearLines(withPiece);
+    syncBoard(cleaned);
+    syncPiece(null);
+    canHoldRef.current = true;
+    lockStartRef.current = null;
+    if (cleaned[0].some(c => c !== 0)) {
+      isGameOverRef.current = true;
+      setIsGameOver(true);
+    }
+  }
 
-    setHoldType(activePiece.type);
-    setActivePiece(swappedPiece);
+  function startAutoMove(direction) {
+    clearTimeout(moveTimeoutRef.current);
+    clearInterval(moveRepeatRef.current);
+
+    const initial = movePiece(boardRef.current, pieceRef.current, direction, 0);
+    if (initial !== pieceRef.current) {
+      syncPiece(initial);
+      lockStartRef.current = null;
+    }
+
+    moveTimeoutRef.current = setTimeout(() => {
+      moveRepeatRef.current = setInterval(() => {
+        const moved = movePiece(boardRef.current, pieceRef.current, direction, 0);
+        if (moved !== pieceRef.current) {
+          syncPiece(moved);
+          lockStartRef.current = null;
+        }
+      }, 50);
+    }, 150);
   }
 
   useEffect(() => {
-    function handleKey(e) {
-      if (inputLocked || !activePiece || isGameOver) return;
+    function rotateOnce() {
+      if (!pieceRef.current || isGameOverRef.current) return;
+      const p = pieceRef.current;
+      const rotated = tryRotate(boardRef.current, p);
+      if (rotated !== p) {
+        syncPiece(rotated);
+        lockStartRef.current = null;
+      }
+    }
+
+    function startRotateDelay() {
+      rotateTimeoutRef.current = setTimeout(() => {
+        rotateRepeatRef.current = setInterval(() => {
+          if (!keyStateRef.current.rotateHeld) return;
+          rotateOnce();
+        }, 90);
+      }, 150);
+    }
+
+    function stopRotate() {
+      clearTimeout(rotateTimeoutRef.current);
+      clearInterval(rotateRepeatRef.current);
+      rotateTimeoutRef.current = null;
+      rotateRepeatRef.current = null;
+    }
+
+    function onKeyDown(e) {
+      if (isGameOverRef.current || !pieceRef.current) return;
 
       if (e.key === "ArrowLeft") {
-        setActivePiece((p) => (p ? movePiece(board, p, -1, 0) : p));
+        keyStateRef.current.left = true;
+        startAutoMove(-1);
       } else if (e.key === "ArrowRight") {
-        setActivePiece((p) => (p ? movePiece(board, p, 1, 0) : p));
+        keyStateRef.current.right = true;
+        startAutoMove(1);
       } else if (e.key === "ArrowDown") {
-        setActivePiece((p) => (p ? movePiece(board, p, 0, 1) : p));
+        keyStateRef.current.down = true;
+        const moved = movePiece(boardRef.current, pieceRef.current, 0, 1);
+        if (moved !== pieceRef.current) {
+          syncPiece(moved);
+          lockStartRef.current = null;
+        }
       } else if (e.key === "ArrowUp") {
-        setActivePiece((p) => (p ? rotatePiece(board, p) : p));
+        if (!keyStateRef.current.rotateHeld) {
+          rotateOnce();
+          startRotateDelay();
+        }
+        keyStateRef.current.rotateHeld = true;
       } else if (e.code === "Space") {
-        setActivePiece((p) => (p ? hardDrop(board, p) : p));
+        handleHardDrop();
       } else if (e.key === "Shift") {
         handleHold();
       }
     }
 
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [board, activePiece, isGameOver, inputLocked, canHold, holdType]);
+    function onKeyUp(e) {
+      if (e.key === "ArrowLeft") {
+        keyStateRef.current.left = false;
+        clearTimeout(moveTimeoutRef.current);
+        clearInterval(moveRepeatRef.current);
+      } else if (e.key === "ArrowRight") {
+        keyStateRef.current.right = false;
+        clearTimeout(moveTimeoutRef.current);
+        clearInterval(moveRepeatRef.current);
+      } else if (e.key === "ArrowDown") {
+        keyStateRef.current.down = false;
+      } else if (e.key === "ArrowUp") {
+        keyStateRef.current.rotateHeld = false;
+        clearTimeout(rotateTimeoutRef.current);
+        clearInterval(rotateRepeatRef.current);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    let lastFall = performance.now();
+
+    function loop() {
+      if (isGameOverRef.current) return;
+
+      if (!pieceRef.current) spawnPiece();
+
+      const now = performance.now();
+      const p = pieceRef.current;
+
+      if (p && now - lastFall >= fallInterval) {
+        lastFall = now;
+
+        const moved = movePiece(boardRef.current, p, 0, 1);
+
+        if (moved === p) {
+          if (lockStartRef.current === null) lockStartRef.current = now;
+          else if (now - lockStartRef.current >= lockDelay) {
+            const merged = mergePiece(boardRef.current, p);
+            const { board: cleaned } = clearLines(merged);
+            syncBoard(cleaned);
+            syncPiece(null);
+            canHoldRef.current = true;
+            lockStartRef.current = null;
+            if (cleaned[0].some(c => c !== 0)) {
+              isGameOverRef.current = true;
+              setIsGameOver(true);
+            }
+          }
+        } else {
+          syncPiece(moved);
+          lockStartRef.current = null;
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(loop);
+    }
+
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [sequence]);
 
   function restartGame() {
-    setBoard(createEmptyBoard());
-    setActivePiece(null);
+    const empty = createEmptyBoard();
+    syncBoard(empty);
+    syncPiece(null);
+    indexRef.current = 0;
     setIndex(0);
+    holdTypeRef.current = null;
     setHoldType(null);
-    setCanHold(true);
+    canHoldRef.current = true;
+    lockStartRef.current = null;
+    isGameOverRef.current = false;
     setIsGameOver(false);
-    setInputLocked(false);
+    keyStateRef.current = {
+      left: false,
+      right: false,
+      down: false,
+      rotateHeld: false
+    };
   }
 
-  const nextType = index < sequence.length ? sequence[index] : null;
+  const nextType =
+    sequence && indexRef.current < sequence.length
+      ? sequence[indexRef.current]
+      : null;
 
   return (
     <div
@@ -170,23 +306,19 @@ export default function TetrisGame({ sequence }) {
         flexDirection: "row",
         justifyContent: "center",
         gap: "40px",
-        position: "relative",
+        position: "relative"
       }}
     >
-      {/* HOLD */}
       <HoldPiece type={holdType} />
-
-      {/* BOARD */}
       <Board
         board={board}
         activePiece={activePiece}
-        ghostPiece={activePiece ? getGhostPiece(board, activePiece) : null}
+        ghostPiece={
+          activePiece ? getGhostPiece(board, activePiece) : null
+        }
       />
-
-      {/* NEXT */}
       <NextPiece type={nextType} />
 
-      {/* GAME OVER UI */}
       {isGameOver && (
         <div
           style={{
@@ -200,7 +332,7 @@ export default function TetrisGame({ sequence }) {
             borderRadius: "12px",
             textAlign: "center",
             fontSize: "32px",
-            width: "300px",
+            width: "300px"
           }}
         >
           <h1>GAME OVER</h1>
@@ -213,7 +345,7 @@ export default function TetrisGame({ sequence }) {
               background: "#ff69b4",
               color: "white",
               border: "none",
-              borderRadius: "8px",
+              borderRadius: "8px"
             }}
           >
             Restart
