@@ -1,4 +1,5 @@
 import Player from "./Player.js";
+import Piece from "./Piece.js";
 
 /* Handles game management and assign its host. */
 
@@ -69,6 +70,10 @@ class Game {
             username: player.username,
             isHost: socketId === this.host,
         }));
+    }
+
+    generatePiece(type) {
+        return new Piece(type);
     }
 }
 

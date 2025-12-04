@@ -17,7 +17,7 @@ import {
   getSpectrum,
 } from "../../../shared/tetris.js";
 
-export default function TetrisGame({ sequence, spectrums = {} }) {
+export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
@@ -94,10 +94,13 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
       setIsGameOver(true);
       return;
     }
+
     const type = sequence[indexRef.current];
     indexRef.current += 1;
     setIndex(indexRef.current);
-    syncPiece(createPiece(type));
+    const newPiece = createPiece(type, spawn);
+    syncPiece(newPiece);
+  
     lockStartRef.current = null;
   }
 
@@ -172,6 +175,9 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
   // --- AUTO MOVE gauche/droite ---
 
   function startAutoMove(direction) {
+    if (!pieceRef.current)
+      return;
+
     clearTimeout(moveTimeoutRef.current);
     clearInterval(moveRepeatRef.current);
 
@@ -216,12 +222,15 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
       if (isGameOverRef.current || !pieceRef.current) return;
 
       if (e.key === "ArrowLeft") {
+        if (!pieceRef.current) return;
         keyStateRef.current.left = true;
         startAutoMove(-1);
       } else if (e.key === "ArrowRight") {
+        if (!pieceRef.current) return;
         keyStateRef.current.right = true;
         startAutoMove(1);
       } else if (e.key === "ArrowDown") {
+        if (!pieceRef.current) return;
         keyStateRef.current.down = true;
         const moved = movePiece(boardRef.current, pieceRef.current, 0, 1);
         if (moved !== pieceRef.current) {
@@ -279,6 +288,7 @@ export default function TetrisGame({ sequence, spectrums = {} }) {
       const p = pieceRef.current;
 
       if (p && now - lastFall >= fallInterval) {
+        if (!p) return;
         lastFall = now;
 
         const moved = movePiece(boardRef.current, p, 0, 1);

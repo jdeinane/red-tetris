@@ -24,6 +24,7 @@ export default function GamePage() {
 	const [players, setPlayers] = useState([]);
 	const [sequence, setSequence] = useState(null);
 	const [spectrums, setSpectrums] = useState({});
+	const [spawn, setSpawn] = useState(null);
 
 	useEffect(() => {
 		if (isSolo) {
@@ -31,7 +32,6 @@ export default function GamePage() {
 			return;
 		}
 
-		window.spawnOverride = null;
 		socket = io("http://localhost:3000");
 
 		window.socket = socket;
@@ -45,11 +45,11 @@ export default function GamePage() {
 		});
 
 		socket.on("start-game", ({ sequence, spawn }) => {
-			window.spawnOverride = spawn;
 			console.log("** Game started! ***");
 			console.log("Sequence:", sequence);
 
 			setSequence(sequence);
+			setSpawn(spawn);
 		});
 
 		socket.on("join-denied", () => {
@@ -93,6 +93,7 @@ export default function GamePage() {
 	return (
 		<TetrisGame
 		sequence={sequence}
+		spawn={spawn}
 		spectrums={isSolo ? {} : spectrums}
 		/>
 	);

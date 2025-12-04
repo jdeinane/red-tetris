@@ -24,8 +24,18 @@ const io = new Server(server, {
 });
 
 
-// For serving client later (for now just public/)
-app.use(express.static(path.join(__dirname, "../client/public")));
+// DEV MODE
+app.get("/", (req, res) => {
+  res.send("Server running. Build client first to serve UI.");
+});
+
+// PROD MODE
+/* app.use(express.static(path.join(__dirname, "../client/dist")));
+
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
+ */
 
 /* HELPER: Check winner */
 function checkWinner(room) {

@@ -14,7 +14,7 @@ export function createEmptyBoard() {
 	- changes the shape of the piece (I, T, L...)
 	- places it in the top center of the board
 	- returns an object */
-export function createPiece(type) {
+export function createPiece(type, spawn = null) {
 	const shape = PIECE_SHAPES[type];
 	if (!shape) {
 		throw new Error(`Unknown piece type: ${type}`);
@@ -22,13 +22,14 @@ export function createPiece(type) {
 
 	const width = shape[0].length;
 	const defaultX = Math.floor(BOARD_WIDTH / 2) - Math.ceil(width / 2);
-	const spawn = window.spawnOverride || { x: defaultX, y: 0};
+
+	const s = spawn || { x: defaultX, y: 0 };
 
 	return {
 		type,
 		shape,
-		x: spawn.x,
-		y: spawn.y,
+		x: s.x,
+		y: s.y,
 	};
 }
 
@@ -71,6 +72,7 @@ export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 /*	- moves the piece
 	- checks if there's a collision */
 export function movePiece(board, piece, dx, dy) {
+	if (!piece) return null;
 	const newPiece = { ...piece, x: piece.x + dx, y: piece.y + dy};
 	return hasCollision(board, newPiece, 0, 0) ? piece : newPiece;
 }
@@ -84,6 +86,7 @@ export function softDrop(board, piece) {
 /*	- brings down the piece until it touches the floor
 	- runs until there's collision, returns the last valide position */
 export function hardDrop(board, piece) {
+	if (!piece) return null;
 	let current = piece;
 	while (!hasCollision(board, current, 0, 1)) {
 		current = movePiece(board, current, 0, 1);
@@ -111,6 +114,7 @@ function rotateMatrixCW(matrix) {
 	- checks collision
 	- if there's collision -> cancel rotation */
 export function rotatePiece(board, piece) {
+	if (!piece) return null;
 	const rotatedShape = rotateMatrixCW(piece.shape);
 	const rotatedPiece = { ...piece, shape: rotatedShape };
 
@@ -212,6 +216,7 @@ export function tick(board, activePiece) {
 	- lets down until it cannot
 	- returns its finale position */
 export function getGhostPiece(board, piece) {
+	if (!piece) return null;
 	let ghost = { ...piece };
 
 	while (!hasCollision(board, ghost, 0, 1)) {
