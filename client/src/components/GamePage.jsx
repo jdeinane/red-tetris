@@ -32,7 +32,7 @@ export default function GamePage() {
 			return;
 		}
 
-		socket = io("http://localhost:3000");
+		socket = io(import.meta.env.VITE_SERVER_URL);
 
 		window.socket = socket;
 		window.currentRoom = room;
