@@ -5,6 +5,7 @@ import Piece from "./Piece.js";
 
 // Dictionary { gameName: Game }
 const games = {};
+let cleanupTimers = {};
 
 export function getOrCreateGame(name) {
     if (!games[name]) {
@@ -22,9 +23,11 @@ export function removeEmptyGame(socketId) {
 
             // If game becomes empty
             if (Object.keys(game.players).length === 0) {
-                delete games[gameName];
-                console.log(`Removed empty game ${gameName}`);
-                return null;
+				clearTimeout(cleanupTimers[gameName]);
+				cleanupTimers[gameName] = setTimeout(() => {
+					delete games[gameName];
+					console.log(`Room ${gameName} deleted (empty after timeout)`);
+				}, 10000);
             }
 
             return game;

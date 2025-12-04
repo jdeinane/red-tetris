@@ -25,9 +25,9 @@ const io = new Server(server, {
 
 
 // DEV MODE
-app.get("/", (req, res) => {
+/* app.get("/", (req, res) => {
   res.send("Server running. Build client first to serve UI.");
-});
+}); */
 
 // PROD MODE
 /* app.use(express.static(path.join(__dirname, "../client/dist")));

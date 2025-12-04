@@ -17,7 +17,10 @@ import {
   getSpectrum,
 } from "../../../shared/tetris.js";
 
-export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
+export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, room, player }) {
+
+	/* States and Refs */
+
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
@@ -46,10 +49,14 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
   const moveRepeatRef = useRef(null);
 
   const rafRef = useRef(null);
+
   const fallInterval = 500;
   const lockDelay = 350;
 
   const garbageRef = useRef(0);
+
+
+	/* Helpers */
 
   function syncBoard(newBoard) {
     boardRef.current = newBoard;
@@ -87,6 +94,8 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     return piece;
   }
 
+  // --- SPAWN PIECE ---
+
   function spawnPiece() {
     if (!sequence || isGameOverRef.current) return;
     if (indexRef.current >= sequence.length) {
@@ -104,24 +113,25 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     lockStartRef.current = null;
   }
 
+  /* Server Events */
 
   function notifyLinesCleared(clearedLines) {
     if (!clearedLines) return;
-    if (!window.socket) return;
+    if (!socket) return;
 
-    window.socket.emit("lines-cleared", {
-      room: window.currentRoom,
-      player: window.currentPlayer,
+    socket.emit("lines-cleared", {
+      room,
+      player,
       count: clearedLines,
     });
   }
 
   function notifyGameOver() {
-    if (!window.socket) return;
+    if (!socket) return;
 
-    window.socket.emit("player-game-over", {
-      room: window.currentRoom,
-      player: window.currentPlayer,
+    socket.emit("player-game-over", {
+      room,
+      player,
     });
   }
 
@@ -172,7 +182,7 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     }
   }
 
-  // --- AUTO MOVE gauche/droite ---
+  // --- AUTO MOVE (DAS/ARR) ---
 
   function startAutoMove(direction) {
     if (!pieceRef.current)
@@ -197,6 +207,8 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
       }, 50);
     }, 150);
   }
+
+  /* Key Input */
 
   useEffect(() => {
     function rotateOnce() {
@@ -273,6 +285,7 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     };
   }, []);
 
+  // --- GRAVITY LOOP ---
 
   useEffect(() => {
     if (!sequence || isGameOverRef.current) return;
@@ -327,6 +340,7 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [sequence, isGameOver]);
 
+	// --- GARBAGE HANDLING ---
 
   useEffect(() => {
     function handleGarbage(e) {
@@ -352,16 +366,17 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     return () => clearInterval(id);
   }, []);
 
+    // --- SPECTRUM UPDATE ---
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (!window.socket || isGameOverRef.current) return;
+      if (!socket || isGameOverRef.current) return;
 
       const spectrum = getSpectrum(boardRef.current);
 
-      window.socket.emit("spectrum-update", {
-        room: window.currentRoom,
-        player: window.currentPlayer,
+      socket.emit("spectrum-update", {
+        room,
+        player,
         spectrum,
       });
     }, 300);
@@ -369,6 +384,7 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     return () => clearInterval(id);
   }, []);
 
+  /* Restart */
 
   function restartGame() {
     const empty = createEmptyBoard();
@@ -390,12 +406,17 @@ export default function TetrisGame({ sequence, spawn, spectrums = {} }) {
     };
   }
 
+	/* Next Piece */
+
   const nextType =
     sequence && indexRef.current < sequence.length
       ? sequence[indexRef.current]
       : null;
 
   const safeSpectrums = spectrums || {};
+
+
+  /* Render */
 
   return (
     <div

@@ -41,6 +41,7 @@ export default function GamePage() {
 		socket.emit("join-room", { room, player });
 
 		socket.on("room-players", (data) => {
+			console.log("ROOM PLAYERS:", data);
 			setPlayers(data);
 		});
 
@@ -87,7 +88,12 @@ export default function GamePage() {
 
 	if (!sequence) {
 		if (isSolo) return <div>Loading solo mode…</div>;
-		return <LobbyPage socket={socket} players={players} />;
+		return (
+			<LobbyPage
+				socket={socket}
+				players={players}
+			/>
+		);
 	}
 
 	return (
@@ -95,6 +101,9 @@ export default function GamePage() {
 		sequence={sequence}
 		spawn={spawn}
 		spectrums={isSolo ? {} : spectrums}
+		socket={socket}
+		room={room}
+		player={player}
 		/>
 	);
 }
