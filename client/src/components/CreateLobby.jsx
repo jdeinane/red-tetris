@@ -7,10 +7,14 @@ export default function CreateLobby() {
   const [playerName, setPlayerName] = useState("");
   const navigate = useNavigate();
 
+  function handleCreate() {
+    localStorage.setItem("maxPlayers", maxPlayers);
+    navigate(`/${lobbyName}/${playerName}`);
+  }
+
   return (
     <div className="page-container">
       <div className="content-box">
-
         <h1 className="title">Create Lobby</h1>
 
         <input
@@ -43,11 +47,10 @@ export default function CreateLobby() {
         <button
           className="form-button"
           disabled={!lobbyName || !playerName}
-          onClick={() => navigate(`/${lobbyName}/${playerName}`)}
+          onClick={handleCreate}
         >
           CREATE
         </button>
-
       </div>
     </div>
   );

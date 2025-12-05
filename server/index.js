@@ -42,7 +42,7 @@ function getRoomsList() {
 	return Object.entries(games).map(([name, game]) => ({
 		name,
 		current: Object.keys(game.players).length,
-		max: 4,
+		max: game.maxPlayers,
 	}))
 }
 
@@ -77,8 +77,13 @@ io.on("connection", (socket) => {
   socket.emit("rooms-list", getRoomsList());
 
   /* JOIN ROOM */
-  socket.on("join-room", ({ room, player }) => {
-    const r = getOrCreateGame(room);
+  socket.on("join-room", ({ room, player, maxPlayers }) => {
+    const r = getOrCreateGame(room, maxPlayers);
+
+	if (Object.keys(r.players).length >= r.maxPlayers) {
+		socket.emit("join-denied", { reason: "room-full" });
+		return;
+	}
 
     if (r.isGameRunning) {
       socket.emit("join-denied", { reason: "game-already-started" });

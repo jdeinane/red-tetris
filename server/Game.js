@@ -8,9 +8,9 @@ const games = {};
 export { games };
 let cleanupTimers = {};
 
-export function getOrCreateGame(name) {
+export function getOrCreateGame(name, maxPlayers = 4) {
     if (!games[name]) {
-        games[name] = new Game(name);
+        games[name] = new Game(name, maxPlayers);
     }
     return games[name];
 }
@@ -39,12 +39,13 @@ export function removeEmptyGame(socketId) {
 }
 
 class Game {
-    constructor(name) {
+    constructor(name, maxPlayers = 4) {
         this.name = name;
         this.players = {};
         this.host = null;
         this.isGameRunning = false;
         this.alive = new Set();
+		this.maxPlayers = maxPlayers;
     }
 
     addPlayer(socketId, username) {

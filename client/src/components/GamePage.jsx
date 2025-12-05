@@ -34,7 +34,14 @@ export default function GamePage() {
 		}
 
 		socket = io(import.meta.env.VITE_SERVER_URL);
-		socket.emit("join-room", { room, player });
+
+		let maxPlayers = localStorage.getItem("maxPlayers");
+		if (maxPlayers) {
+			maxPlayers = parseInt(maxPlayers);
+			localStorage.removeItem("maxPlayers");
+		}
+
+		socket.emit("join-room", { room, player, maxPlayers });
 
 		socket.on("room-players", (data) => {
 			console.log("ROOM PLAYERS:", data);
