@@ -25,6 +25,7 @@ export default function GamePage() {
 	const [sequence, setSequence] = useState(null);
 	const [spectrums, setSpectrums] = useState({});
 	const [spawn, setSpawn] = useState(null);
+	const [modal, setModal] = useState(null);
 
 	useEffect(() => {
 		if (isSolo) {
@@ -33,11 +34,6 @@ export default function GamePage() {
 		}
 
 		socket = io(import.meta.env.VITE_SERVER_URL);
-
-		window.socket = socket;
-		window.currentRoom = room;
-		window.currentPlayer = player;
-
 		socket.emit("join-room", { room, player });
 
 		socket.on("room-players", (data) => {
@@ -51,6 +47,7 @@ export default function GamePage() {
 
 			setSequence(sequence);
 			setSpawn(spawn);
+			setModal(null);
 		});
 
 		socket.on("join-denied", () => {
@@ -66,13 +63,11 @@ export default function GamePage() {
 		});
 
 		socket.on("game-ended", ({ winner }) => {
-			if (winner === window.currentPlayer) {
-				alert("🏆 YOU WIN!");
+			if (winner === player) {
+				setModal({ result: "win", winner });
 			} else {
-				alert(`❌ YOU LOSE\nWinner: ${winner}`);
-			}
-
-			window.location.href = `/multi/join`;
+				setModal({ result: "lose", winner });
+				}
 		});
 
 		socket.on("spectrum", ({ from, spectrum }) => {
@@ -104,6 +99,7 @@ export default function GamePage() {
 		socket={socket}
 		room={room}
 		player={player}
+		endGame={modal}
 		/>
 	);
 }

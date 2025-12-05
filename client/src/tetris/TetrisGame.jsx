@@ -3,6 +3,7 @@ import Board from "./Board";
 import NextPiece from "./NextPiece";
 import HoldPiece from "./HoldPiece";
 import SpectrumView from "../components/SpectrumView.jsx";
+import GameOverModal from "../components/GameOverModal.jsx";
 
 import {
   createEmptyBoard,
@@ -17,7 +18,14 @@ import {
   getSpectrum,
 } from "../../../shared/tetris.js";
 
-export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, room, player }) {
+export default function TetrisGame({
+	sequence,
+	spawn,
+	spectrums = {},
+	socket,
+	room,
+	player,
+	endGame }) {
 
 	/* States and Refs */
 
@@ -26,6 +34,10 @@ export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, ro
   const [index, setIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
   const [holdType, setHoldType] = useState(null);
+
+  const [showModal, setShowModal] = useState(false);
+  const [modalResult, setModalResult] = useState(null);
+  const [modalWinner, setModalWinner] = useState(null);
 
   const boardRef = useRef(board);
   const pieceRef = useRef(null);
@@ -108,6 +120,13 @@ export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, ro
     indexRef.current += 1;
     setIndex(indexRef.current);
     const newPiece = createPiece(type, spawn);
+
+	if (collision(boardRef.current, newPiece)) {
+		isGameOverRef.current = true;
+		setIsGameOver(true);
+		notifyGameOver();
+		return;
+	}
     syncPiece(newPiece);
   
     lockStartRef.current = null;
@@ -175,11 +194,6 @@ export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, ro
     canHoldRef.current = true;
     lockStartRef.current = null;
 
-    if (cleaned[0].some((c) => c !== 0)) {
-      isGameOverRef.current = true;
-      setIsGameOver(true);
-      notifyGameOver();
-    }
   }
 
   // --- AUTO MOVE (DAS/ARR) ---
@@ -384,6 +398,15 @@ export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, ro
     return () => clearInterval(id);
   }, []);
 
+    // --- STOP THE GAME AFTER WINNER ANNOUNCEMENT ---
+
+	useEffect(() => {
+	if (endGame) {
+		isGameOverRef.current = true;
+		cancelAnimationFrame(rafRef.current);
+	}
+	}, [endGame]);
+
   /* Restart */
 
   function restartGame() {
@@ -460,6 +483,13 @@ export default function TetrisGame({ sequence, spawn, spectrums = {}, socket, ro
       </div>
 
       {/* GAME OVER UI */}
+	  {endGame && (
+		<GameOverModal 
+			result={endGame.result}
+			winner={endGame.winner}
+			onConfirm={() => window.location.href = "/multi/join"}
+		/>
+		)}
       {isGameOver && (
         <div
           style={{
