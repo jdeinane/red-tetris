@@ -5,6 +5,7 @@ import Piece from "./Piece.js";
 
 // Dictionary { gameName: Game }
 const games = {};
+export { games };
 let cleanupTimers = {};
 
 export function getOrCreateGame(name) {

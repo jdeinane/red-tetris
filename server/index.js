@@ -3,7 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import { getOrCreateGame, removeEmptyGame } from "./Game.js";
+import { games, getOrCreateGame, removeEmptyGame } from "./Game.js";
 import { generateSequence } from "../shared/pieces.js";
 
 /*   This file contains the heart of the server, it handles:
@@ -37,6 +37,15 @@ app.get("*", (req, res) => {
 });
  */
 
+/* Lobby selection */
+function getRoomsList() {
+	return Object.entries(games).map(([name, game]) => ({
+		name,
+		current: Object.keys(game.players).length,
+		max: 4,
+	}))
+}
+
 /* HELPER: Check winner */
 function checkWinner(room) {
   if (!room.isGameRunning)
@@ -64,6 +73,9 @@ function checkWinner(room) {
 io.on("connection", (socket) => {
   console.log("🟢 Connected:", socket.id);
 
+  /* SELECT LOBBY */
+  socket.emit("rooms-list", getRoomsList());
+
   /* JOIN ROOM */
   socket.on("join-room", ({ room, player }) => {
     const r = getOrCreateGame(room);
@@ -79,6 +91,7 @@ io.on("connection", (socket) => {
     console.log(`${player} joined room ${room}`);
 
     io.to(room).emit("room-players", r.getPlayersInfo());
+	io.emit("rooms-list", getRoomsList());
   });
 
   /* DISCONNECT */
@@ -92,6 +105,8 @@ io.on("connection", (socket) => {
       checkWinner(room);
       io.to(room.name).emit("room-players", room.getPlayersInfo());
     }
+
+	io.emit("rooms-list", getRoomsList());
   });
 
   /* START GAME */
