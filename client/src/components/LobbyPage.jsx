@@ -22,18 +22,23 @@ export default function LobbyPage({ socket, players, gameRunning }) {
 
       {isHost && (
         gameRunning ? (
-            <button className="form-button" disabled style={{ opacity: 0.5, cursor: "wait" }}>
-                Game is still running...
-            </button>
+          <button className="form-button" disabled style={{ opacity: 0.5, cursor: "wait" }}>
+            Game is still running...
+          </button>
+        ) : players.length < 2 ? (
+          <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+            Waiting for players...
+          </button>
         ) : (
-            <button 
-                className="form-button"
-                onClick={() => socket.emit("start-game", { room })}
-            >
-                Start Game
-            </button>
+          <button 
+            className="form-button"
+            onClick={() => socket.emit("start-game", { room })}
+          >
+            Start Game
+          </button>
         )
       )}
+
       {!isHost && gameRunning && (
           <p style={{ color: "#aaa", marginTop: "20px" }}>
               Waiting for game to finish...

@@ -24,19 +24,6 @@ export default function CreateLobby() {
           onChange={(e) => setLobbyName(e.target.value)}
         />
 
-        <p style={{ marginTop: "15px" }}>Max players:</p>
-        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-          {[2, 3, 4].map((num) => (
-            <button
-              key={num}
-              className="form-button"
-              onClick={() => setMaxPlayers(num)}
-            >
-              {num}
-            </button>
-          ))}
-        </div>
-
         <input
           className="form-input"
           placeholder="Your name"
@@ -45,10 +32,29 @@ export default function CreateLobby() {
           onChange={(e) => setPlayerName(e.target.value)}
         />
 
+        <p style={{ marginTop: "15px", marginBottom: "8px" }}>Max players:</p>
+        
+        <div className="max-players-row">
+          {[2, 3, 4].map((num) => (
+            <button
+              key={num}
+              type="button"
+              className={
+                "form-button max-player-button" +
+                (maxPlayers === num ? " max-player-button-selected" : "")
+              }
+              onClick={() => setMaxPlayers(num)}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+
         <button
           className="form-button"
           disabled={!lobbyName || !playerName}
           onClick={handleCreate}
+          style={{ marginTop: "20px" }}
         >
           CREATE
         </button>

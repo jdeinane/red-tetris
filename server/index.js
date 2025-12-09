@@ -137,6 +137,9 @@ io.on("connection", (socket) => {
     if (r.isGameRunning)
       return;
 
+    if (Object.keys(r.players).length < 2)
+      return;
+
     r.isGameRunning = true;
     r.alive = new Set(Object.keys(r.players));
 
