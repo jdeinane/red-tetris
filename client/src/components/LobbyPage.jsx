@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 
-export default function LobbyPage({ socket, players }) {
+export default function LobbyPage({ socket, players, gameRunning }) {
   const { room, player } = useParams();
 
   const me = players.find(p => p.username === player);
@@ -21,9 +21,23 @@ export default function LobbyPage({ socket, players }) {
       </ul>
 
       {isHost && (
-        <button onClick={() => socket.emit("start-game", { room })}>
-          Start Game
-        </button>
+        gameRunning ? (
+            <button className="form-button" disabled style={{ opacity: 0.5, cursor: "wait" }}>
+                Game is still running...
+            </button>
+        ) : (
+            <button 
+                className="form-button"
+                onClick={() => socket.emit("start-game", { room })}
+            >
+                Start Game
+            </button>
+        )
+      )}
+      {!isHost && gameRunning && (
+          <p style={{ color: "#aaa", marginTop: "20px" }}>
+              Waiting for game to finish...
+          </p>
       )}
     </div>
   );

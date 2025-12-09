@@ -26,6 +26,7 @@ export default function GamePage() {
 	const [spectrums, setSpectrums] = useState({});
 	const [spawn, setSpawn] = useState(null);
 	const [modal, setModal] = useState(null);
+	const [isGameRunning, setIsGameRunning] = useState(false);
 
 	useEffect(() => {
 		if (isSolo) {
@@ -56,6 +57,7 @@ export default function GamePage() {
 			setSpawn(spawn);
 			setModal(null);
 			setSpectrums({})
+			setIsGameRunning(true);
 		});
 
 		socket.on("join-denied", ( {reason} ) => {
@@ -86,7 +88,8 @@ export default function GamePage() {
 				setModal({ result: "win", winner });
 			} else {
 				setModal({ result: "lose", winner });
-				}
+			}
+			setIsGameRunning(false);
 		});
 
 		socket.on("spectrum", ({ from, spectrum }) => {
@@ -106,12 +109,20 @@ export default function GamePage() {
 		setSpectrums({});
 	};
 
+	const handleQuitToMenu = () => {
+		if (socket) {
+			socket.disconnect();
+			window.location.href = "/";
+		}
+	};
+
 	if (!sequence) {
 		if (isSolo) return <div>Loading solo mode…</div>;
 		return (
 			<LobbyPage
 				socket={socket}
 				players={players}
+				gameRunning={isGameRunning}
 			/>
 		);
 	}
@@ -126,6 +137,7 @@ export default function GamePage() {
 		player={player}
 		endGame={modal}
 		onRestart={handleBackToLobby}
+		onExit={handleQuitToMenu}
 		/>
 	);
 }

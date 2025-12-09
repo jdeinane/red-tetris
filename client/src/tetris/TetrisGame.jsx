@@ -26,7 +26,8 @@ export default function TetrisGame({
 	room,
 	player,
 	endGame,
-  onRestart }) {
+  onRestart,
+  onExit }) {
 
 	/* States and Refs */
 
@@ -489,9 +490,10 @@ export default function TetrisGame({
 			result={endGame.result}
 			winner={endGame.winner}
 			onConfirm={onRestart}
+      onQuit={onExit}
 		/>
 		)}
-{/* LOCAL GAME OVER (ELIMINATED) */}
+      {/* LOCAL GAME OVER (ELIMINATED) */}
       {isGameOver && !endGame && (
         <div
           style={{
@@ -544,6 +546,22 @@ export default function TetrisGame({
           >
             Leave to Lobby
           </button>
+
+          {/* Bouton Rage Quit (Menu Principal) */}
+             <button
+                onClick={onExit} // Utilise onExit
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  background: "transparent",
+                  color: "#888",
+                  border: "none",
+                  textDecoration: "underline"
+                }}
+             >
+                Quit to Main Menu
+            </button>
         </div>
       )}
     </div>
