@@ -30,7 +30,8 @@ export default function GamePage() {
 
 	useEffect(() => {
 		if (isSolo) {
-			setSequence(generateLocalSequence());
+			if (!sequence)
+				setSequence(generateLocalSequence());
 			return;
 		}
 
@@ -101,7 +102,7 @@ export default function GamePage() {
 
 		return () => socket.disconnect();
 
-	}, [room, player]);
+	}, [room, player, isSolo, sequence]);
 
 	const handleBackToLobby = () => {
 		setSequence(null);
@@ -138,6 +139,7 @@ export default function GamePage() {
 		endGame={modal}
 		onRestart={handleBackToLobby}
 		onExit={handleQuitToMenu}
+		isSolo={isSolo}
 		/>
 	);
 }

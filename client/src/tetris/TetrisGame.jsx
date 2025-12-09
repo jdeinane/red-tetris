@@ -28,7 +28,8 @@ export default function TetrisGame({
 	player,
 	endGame,
   onRestart,
-  onExit }) {
+  onExit,
+  isSolo, }) {
 
 	/* States and Refs */
 
@@ -435,7 +436,7 @@ export default function TetrisGame({
 
   /* Render */
 
-  return (
+return (
     <div
       style={{
         display: "flex",
@@ -476,16 +477,17 @@ export default function TetrisGame({
         ))}
       </div>
 
-      {/* GAME OVER UI */}
-	  {endGame && (
-		<GameOverModal 
-			result={endGame.result}
-			winner={endGame.winner}
-			onConfirm={onRestart}
-      onQuit={onExit}
-		/>
-		)}
-      {/* LOCAL GAME OVER (ELIMINATED) */}
+      {/* GAME OVER UI (MODALE SERVEUR) */}
+      {endGame && (
+        <GameOverModal 
+          result={endGame.result}
+          winner={endGame.winner}
+          onConfirm={onRestart}
+          onQuit={onExit}
+        />
+      )}
+
+      {/* LOCAL GAME OVER (ELIMINATED / SOLO) */}
       {isGameOver && !endGame && (
         <div
           style={{
@@ -493,7 +495,7 @@ export default function TetrisGame({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.5)",
+            background: "rgba(0, 0, 0, 0.85)",
             backdropFilter: "blur(4px)",
             padding: "40px",
             color: "white",
@@ -510,50 +512,92 @@ export default function TetrisGame({
             fontSize: "28px",
             marginBottom: "10px"
           }}>
-            ELIMINATED
+            {isSolo ? "GAME OVER" : "ELIMINATED"}
           </h1>
           
-          <div className="loader" style={{ marginBottom: "20px", fontSize: "12px", opacity: 0.8 }}>
-            Waiting for winner...
+          {!isSolo && (
+            <>
+                <div className="loader" style={{ marginBottom: "20px", fontSize: "12px", opacity: 0.8 }}>
+                    Waiting for winner...
+                </div>
+                <p style={{ fontSize: "11px", color: "#aaa", marginBottom: "20px" }}>
+                    Watch the spectrums on the right!
+                </p>
+            </>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
+            {isSolo ? (
+                <>
+                    <button
+                        onClick={restartGame}
+                        style={{
+                            padding: "10px 20px",
+                            fontSize: "16px",
+                            cursor: "pointer",
+                            background: "linear-gradient(90deg, #ff00ff, #00eaff)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            width: "100%",
+                            fontWeight: "bold"
+                        }}
+                    >
+                        RETRY
+                    </button>
+                    <button
+                        onClick={onExit}
+                        style={{
+                            padding: "8px 16px",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            background: "transparent",
+                            color: "#aaa",
+                            border: "1px solid #555",
+                            borderRadius: "6px",
+                            width: "100%"
+                        }}
+                    >
+                        MAIN MENU
+                    </button>
+                </>
+            ) : (
+                <>
+                    <button
+                        onClick={onRestart}
+                        style={{
+                            padding: "10px 20px",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            background: "rgba(255, 255, 255, 0.1)",
+                            color: "#ddd",
+                            border: "1px solid #555",
+                            borderRadius: "6px",
+                            transition: "background 0.2s",
+                            width: "100%"
+                        }}
+                        onMouseOver={(e) => e.target.style.background = "rgba(255, 0, 0, 0.3)"}
+                        onMouseOut={(e) => e.target.style.background = "rgba(255, 255, 255, 0.1)"}
+                    >
+                        Leave to Lobby
+                    </button>
+                    <button
+                        onClick={onExit}
+                        style={{
+                            padding: "8px 16px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            background: "transparent",
+                            color: "#888",
+                            border: "none",
+                            textDecoration: "underline"
+                        }}
+                    >
+                        Quit to Main Menu
+                    </button>
+                </>
+            )}
           </div>
-
-          <p style={{ fontSize: "11px", color: "#aaa", marginBottom: "20px" }}>
-            Watch the spectrums on the right!
-          </p>
-
-          <button
-            onClick={onRestart}
-            style={{
-              padding: "10px 20px",
-              fontSize: "14px",
-              cursor: "pointer",
-              background: "rgba(255, 255, 255, 0.1)",
-              color: "#ddd",
-              border: "1px solid #555",
-              borderRadius: "6px",
-              transition: "background 0.2s"
-            }}
-            onMouseOver={(e) => e.target.style.background = "rgba(255, 0, 0, 0.3)"}
-            onMouseOut={(e) => e.target.style.background = "rgba(255, 255, 255, 0.1)"}
-          >
-            Leave to Lobby
-          </button>
-
-          {/* Bouton Rage Quit (Menu Principal) */}
-             <button
-                onClick={onExit} // Utilise onExit
-                style={{
-                  padding: "8px 16px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                  background: "transparent",
-                  color: "#888",
-                  border: "none",
-                  textDecoration: "underline"
-                }}
-             >
-                Quit to Main Menu
-            </button>
         </div>
       )}
     </div>
