@@ -25,7 +25,8 @@ export default function TetrisGame({
 	socket,
 	room,
 	player,
-	endGame }) {
+	endGame,
+  onRestart }) {
 
 	/* States and Refs */
 
@@ -487,39 +488,61 @@ export default function TetrisGame({
 		<GameOverModal 
 			result={endGame.result}
 			winner={endGame.winner}
-			onConfirm={() => window.location.href = "/multi/join"}
+			onConfirm={onRestart}
 		/>
 		)}
-      {isGameOver && (
+{/* LOCAL GAME OVER (ELIMINATED) */}
+      {isGameOver && !endGame && (
         <div
           style={{
             position: "absolute",
-            top: "35%",
+            top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.85)",
+            background: "rgba(0, 0, 0, 0.5)",
+            backdropFilter: "blur(4px)",
             padding: "40px",
             color: "white",
             borderRadius: "12px",
             textAlign: "center",
-            fontSize: "32px",
+            border: "1px solid rgba(255, 0, 0, 0.5)",
             width: "300px",
+            zIndex: 10
           }}
         >
-          <h1>GAME OVER</h1>
+          <h1 style={{ 
+            color: "#ff4444", 
+            textShadow: "0 0 10px rgba(255,0,0,0.5)",
+            fontSize: "28px",
+            marginBottom: "10px"
+          }}>
+            ELIMINATED
+          </h1>
+          
+          <div className="loader" style={{ marginBottom: "20px", fontSize: "12px", opacity: 0.8 }}>
+            Waiting for winner...
+          </div>
+
+          <p style={{ fontSize: "11px", color: "#aaa", marginBottom: "20px" }}>
+            Watch the spectrums on the right!
+          </p>
+
           <button
-            onClick={restartGame}
+            onClick={onRestart}
             style={{
-              padding: "12px 25px",
-              fontSize: "18px",
+              padding: "10px 20px",
+              fontSize: "14px",
               cursor: "pointer",
-              background: "#ff69b4",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
+              background: "rgba(255, 255, 255, 0.1)",
+              color: "#ddd",
+              border: "1px solid #555",
+              borderRadius: "6px",
+              transition: "background 0.2s"
             }}
+            onMouseOver={(e) => e.target.style.background = "rgba(255, 0, 0, 0.3)"}
+            onMouseOut={(e) => e.target.style.background = "rgba(255, 255, 255, 0.1)"}
           >
-            Restart
+            Leave to Lobby
           </button>
         </div>
       )}

@@ -6,7 +6,7 @@ import LobbyPage from "./LobbyPage";
 import { generateSequence } from "../../../shared/pieces.js";
 
 function generateLocalSequence() {
-	return generateSequence(200);
+	return generateSequence(1000);
 }
 
 /* Client game page. This file handles:
@@ -55,6 +55,7 @@ export default function GamePage() {
 			setSequence(sequence);
 			setSpawn(spawn);
 			setModal(null);
+			setSpectrums({})
 		});
 
 		socket.on("join-denied", ( {reason} ) => {
@@ -99,6 +100,12 @@ export default function GamePage() {
 
 	}, [room, player]);
 
+	const handleBackToLobby = () => {
+		setSequence(null);
+		setModal(null);
+		setSpectrums({});
+	};
+
 	if (!sequence) {
 		if (isSolo) return <div>Loading solo mode…</div>;
 		return (
@@ -118,6 +125,7 @@ export default function GamePage() {
 		room={room}
 		player={player}
 		endGame={modal}
+		onRestart={handleBackToLobby}
 		/>
 	);
 }
