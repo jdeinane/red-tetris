@@ -52,14 +52,13 @@ export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 			if (
 				newX < 0 			||
 				newX >= BOARD_WIDTH ||
-				newY < 0			||
 				newY >= BOARD_HEIGHT
 			) {
 				return true;
 			}
 
 			// Collision with a block that is already laid?
-			if (board[newY][newX]) {
+			if (newY >= 0 && board[newY][newX]) {
 				return true;
 			}
 		}
