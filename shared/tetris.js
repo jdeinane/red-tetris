@@ -115,10 +115,24 @@ function rotateMatrixCW(matrix) {
 	- if there's collision -> cancel rotation */
 export function rotatePiece(board, piece) {
 	if (!piece) return null;
-	const rotatedShape = rotateMatrixCW(piece.shape);
-	const rotatedPiece = { ...piece, shape: rotatedShape };
 
-	return hasCollision(board, rotatedPiece, 0, 0) ? piece : rotatedPiece;
+	const rotateShape = rotateMatrixCW(piece.shape);
+	const candidate = { ...piece, shape: rotateShape };
+	const kicks = [
+		[0, 0],   // 1. normal rotation
+		[-1, 0],  // 2. move to the left if right wall
+		[1, 0],   // 3. move to the right if left wall
+		[0, -1],  // 4. move to the top if floor
+		[-2, 0],  // 5. double left (for I piece)
+		[2, 0],   // 6. double right (for I piece)
+	];
+
+	for (const [ox, oy] of kicks) {
+		if (!hasCollision(board, candidate, ox, oy)) {
+			return { ...candidate, x: candidate.x + ox, y: candidate.y + oy };
+		}
+	}
+	return piece;
 }
 
 /* Fusion + lines */
@@ -231,18 +245,20 @@ export function addGarbageLines(board, count) {
 	if (count <= 0)
 		return board;
 
-	const rows = board.length;
 	const cols = board[0].length;
 
 	// Clone board
 	const newBoard = board.map((row) => [...row]);
 
 	for (let i = 0; i < count; i++) {
+		if (newBoard[0].some(cell => cell !== 0))
+			return null;
+
 		newBoard.shift();
 
 		const hole = Math.floor(Math.random() * cols);
 		const garbageRow = Array.from({ length: cols }, (_, x) =>
-		x === hole ? 0 : "G" // "G" = garbage block
+		x === hole ? 0 : "G"
 		);
 
 		console.log("Garbage row added:", garbageRow); // DEBUG

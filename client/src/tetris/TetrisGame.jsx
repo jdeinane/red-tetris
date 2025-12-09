@@ -16,6 +16,7 @@ import {
   clearLines,
   addGarbageLines,
   getSpectrum,
+  hasCollision,
 } from "../../../shared/tetris.js";
 
 export default function TetrisGame({
@@ -34,12 +35,9 @@ export default function TetrisGame({
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
   const [index, setIndex] = useState(0);
+
   const [isGameOver, setIsGameOver] = useState(false);
   const [holdType, setHoldType] = useState(null);
-
-  const [showModal, setShowModal] = useState(false);
-  const [modalResult, setModalResult] = useState(null);
-  const [modalWinner, setModalWinner] = useState(null);
 
   const boardRef = useRef(board);
   const pieceRef = useRef(null);
@@ -123,7 +121,7 @@ export default function TetrisGame({
     setIndex(indexRef.current);
     const newPiece = createPiece(type, spawn);
 
-	if (collision(boardRef.current, newPiece)) {
+	if (hasCollision(boardRef.current, newPiece)) {
 		isGameOverRef.current = true;
 		setIsGameOver(true);
 		notifyGameOver();
@@ -230,7 +228,7 @@ export default function TetrisGame({
     function rotateOnce() {
       if (!pieceRef.current || isGameOverRef.current) return;
       const p = pieceRef.current;
-      const rotated = tryRotate(boardRef.current, p);
+      const rotated = rotatePiece(boardRef.current, p);
       if (rotated !== p) {
         syncPiece(rotated);
         lockStartRef.current = null;
@@ -369,11 +367,20 @@ export default function TetrisGame({
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (garbageRef.current > 0) {
+      if (garbageRef.current > 0 && !isGameOverRef.current) {
         const updated = addGarbageLines(
           boardRef.current,
           garbageRef.current
         );
+
+        if (updated === null) {
+          garbageRef.current = 0;
+          isGameOverRef.current = true;
+          setIsGameOver(true);
+          notifyGameOver();
+          return;
+        }
+  
         garbageRef.current = 0;
         syncBoard(updated);
       }
