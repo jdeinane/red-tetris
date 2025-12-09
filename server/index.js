@@ -43,7 +43,8 @@ function getRoomsList() {
 		name,
 		current: Object.keys(game.players).length,
 		max: game.maxPlayers,
-	}))
+    isPlaying: game.isGameRunning
+	}));
 }
 
 /* HELPER: Check winner */
@@ -78,15 +79,26 @@ io.on("connection", (socket) => {
 
   /* JOIN ROOM */
   socket.on("join-room", ({ room, player, maxPlayers }) => {
+    if (!player || player.trim().length === 0 || player.length > 12) {
+      socket.emit("join-denied", { reason: "invalid-name" });
+      return;
+    }
+
     const r = getOrCreateGame(room, maxPlayers);
 
-	if (Object.keys(r.players).length >= r.maxPlayers) {
-		socket.emit("join-denied", { reason: "room-full" });
-		return;
-	}
+	  if (Object.keys(r.players).length >= r.maxPlayers) {
+		  socket.emit("join-denied", { reason: "room-full" });
+		  return;
+	  }
 
     if (r.isGameRunning) {
       socket.emit("join-denied", { reason: "game-already-started" });
+      return;
+    }
+
+    const isNameTaken = Object.values(r.players).some(p => p.username === player);
+    if (isNameTaken) {
+      socket.emit("join-denied", { reason: "name-taken" });
       return;
     }
 

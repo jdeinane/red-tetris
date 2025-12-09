@@ -9,8 +9,10 @@ export { games };
 let cleanupTimers = {};
 
 export function getOrCreateGame(name, maxPlayers = 4) {
+    const limit = maxPlayers || 4;
+
     if (!games[name]) {
-        games[name] = new Game(name, maxPlayers);
+        games[name] = new Game(name, limit);
     }
     return games[name];
 }

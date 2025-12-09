@@ -57,8 +57,19 @@ export default function GamePage() {
 			setModal(null);
 		});
 
-		socket.on("join-denied", () => {
-			alert("Game already started. \nPlease wait for the next round!");
+		socket.on("join-denied", ( {reason} ) => {
+			let message = "Can't enter room.";
+
+			if (reason === "room-full")
+				message = "Lobby is full.";
+			else if (reason === "game-already-started")
+				message = "The game has already started.";
+			else if (reason === "name-taken")
+				message = "This username is already taken.";
+			else if (reason === "invalid-name")
+				message = "Invalid username.";
+
+			alert(message);
 			window.location.href = "/multi/join";
 		});
 

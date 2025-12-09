@@ -37,19 +37,23 @@ export default function JoinLobby() {
               ❄ {room.name} — {room.current}/{room.max}
             </p>
 
-            {room.current < room.max ? (
-              <button
-                className="form-button"
-                onClick={() => navigate(`/multi/join/${room.name}`)}
-              >
-                JOIN
-              </button>
-            ) : (
-              <button className="form-button" disabled>
-                FULL
-              </button>
-            )}
-          </div>
+        {room.isPlaying ? (
+            <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+              Game Running
+            </button>
+          ) : room.current >= room.max ? (
+            <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+              Full
+            </button>
+          ) : (
+            <button
+              className="form-button"
+              onClick={() => navigate(`/multi/join/${room.name}`)}
+            >
+              REJOINDRE
+            </button>
+          )}
+        </div>
         ))}
       </div>
     </div>

@@ -15,6 +15,7 @@ export default function JoinName() {
         <input
           className="form-input"
           placeholder="Your name"
+          maxLength={12}
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
         />
