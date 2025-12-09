@@ -54,9 +54,6 @@ export default function TetrisGame({
     rotateHeld: false,
   });
 
-  const rotateTimeoutRef = useRef(null);
-  const rotateRepeatRef = useRef(null);
-
   const moveTimeoutRef = useRef(null);
   const moveRepeatRef = useRef(null);
 
@@ -235,15 +232,6 @@ export default function TetrisGame({
       }
     }
 
-    function startRotateDelay() {
-      rotateTimeoutRef.current = setTimeout(() => {
-        rotateRepeatRef.current = setInterval(() => {
-          if (!keyStateRef.current.rotateHeld) return;
-          rotateOnce();
-        }, 90);
-      }, 150);
-    }
-
     function onKeyDown(e) {
       if (isGameOverRef.current || !pieceRef.current) return;
 
@@ -266,7 +254,6 @@ export default function TetrisGame({
       } else if (e.key === "ArrowUp") {
         if (!keyStateRef.current.rotateHeld) {
           rotateOnce();
-          startRotateDelay();
         }
         keyStateRef.current.rotateHeld = true;
       } else if (e.code === "Space") {
@@ -286,8 +273,6 @@ export default function TetrisGame({
         keyStateRef.current.down = false;
       } else if (e.key === "ArrowUp") {
         keyStateRef.current.rotateHeld = false;
-        clearTimeout(rotateTimeoutRef.current);
-        clearInterval(rotateRepeatRef.current);
       }
     }
 
