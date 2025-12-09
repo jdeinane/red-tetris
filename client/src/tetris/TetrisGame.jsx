@@ -47,6 +47,8 @@ export default function TetrisGame({
   const holdTypeRef = useRef(null);
   const canHoldRef = useRef(true);
   const lockStartRef = useRef(null);
+  const lockResetRef = useRef(0);
+  const MAX_LOCK_RESETS = 15;
 
   const keyStateRef = useRef({
     left: false,
@@ -125,9 +127,10 @@ export default function TetrisGame({
 		notifyGameOver();
 		return;
 	}
+
     syncPiece(newPiece);
-  
     lockStartRef.current = null;
+    lockResetRef.current = 0;
   }
 
   /* Server Events */
@@ -194,6 +197,14 @@ export default function TetrisGame({
 
   }
 
+
+  function resetLockTimer() {
+    if (lockResetRef.current < MAX_LOCK_RESETS) {
+      lockStartRef.current = null;
+      lockResetRef.current++;
+    }
+  }
+
   // --- AUTO MOVE (DAS/ARR) ---
 
   function startAutoMove(direction) {
@@ -206,7 +217,7 @@ export default function TetrisGame({
     const initial = movePiece(boardRef.current, pieceRef.current, direction, 0);
     if (initial !== pieceRef.current) {
       syncPiece(initial);
-      lockStartRef.current = null;
+      resetLockTimer();
     }
 
     moveTimeoutRef.current = setTimeout(() => {
@@ -214,7 +225,7 @@ export default function TetrisGame({
         const moved = movePiece(boardRef.current, pieceRef.current, direction, 0);
         if (moved !== pieceRef.current) {
           syncPiece(moved);
-          lockStartRef.current = null;
+          resetLockTimer();
         }
       }, 50);
     }, 150);
@@ -229,7 +240,7 @@ export default function TetrisGame({
       const rotated = rotatePiece(boardRef.current, p);
       if (rotated !== p) {
         syncPiece(rotated);
-        lockStartRef.current = null;
+        resetLockTimer();
       }
     }
 
@@ -250,7 +261,7 @@ export default function TetrisGame({
         const moved = movePiece(boardRef.current, pieceRef.current, 0, 1);
         if (moved !== pieceRef.current) {
           syncPiece(moved);
-          lockStartRef.current = null;
+          resetLockTimer();
         }
       } else if (e.key === "ArrowUp") {
         if (!keyStateRef.current.rotateHeld) {
@@ -354,9 +365,10 @@ export default function TetrisGame({
   useEffect(() => {
     const id = setInterval(() => {
       if (garbageRef.current > 0 && !isGameOverRef.current) {
+        const linesToAdd = garbageRef.current;
         const updated = addGarbageLines(
           boardRef.current,
-          garbageRef.current
+          linesToAdd
         );
 
         if (updated === null) {
@@ -367,6 +379,14 @@ export default function TetrisGame({
           return;
         }
   
+        if (pieceRef.current) {
+          const adjustedPiece = {
+            ...pieceRef.current,
+            y: pieceRef.current.y - linesToAdd
+          };
+          syncPiece(adjustedPiece);
+        }
+
         garbageRef.current = 0;
         syncBoard(updated);
       }

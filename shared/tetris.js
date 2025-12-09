@@ -1,6 +1,35 @@
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants.js";
 import { PIECE_SHAPES } from "./pieces.js";
 
+const WALL_KICKS = {
+  DEFAULT: [
+		[0, 0],   // 1. normal rotation
+		[-1, 0],  // 2. move to the left if right wall
+		[1, 0],   // 3. move to the right if left wall
+		[0, -1],  // 4. move to the top if floor
+		[-2, 0],  // 5. double left (for I piece)
+		[2, 0],   // 6. double right (for I piece)
+		[-1, -1], // 7. diagonal (complex case)
+		[1, -1],
+		[0, -2],  // 8. heavy ascend (critical case)
+  ],
+  I: [
+		[0, 0],
+        [-2, 0],  // 1. double left
+        [2, 0],   // 2. double right
+        [-1, 0],  // 3. simple left
+        [1, 0],   // 4. simple right
+        [-3, 0],  // 5. triple left
+        [3, 0],   // 6. triple right
+        [0, -1],  // 7. top
+        [-2, -1], 
+        [2, -1],
+        [0, -2],
+        [0, -3]   // 8. triple top
+]
+};
+
+
 /* Board helpers: 
 	- creates a 20x10 grid
 	- fills it with 0 (empty) */
@@ -52,14 +81,13 @@ export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 			if (
 				newX < 0 			||
 				newX >= BOARD_WIDTH ||
-				newY < 0			||
 				newY >= BOARD_HEIGHT
 			) {
 				return true;
 			}
 
 			// Collision with a block that is already laid?
-			if (board[newY][newX]) {
+			if (newY >= 0 && board[newY][newX]) {
 				return true;
 			}
 		}
@@ -116,16 +144,12 @@ function rotateMatrixCW(matrix) {
 export function rotatePiece(board, piece) {
 	if (!piece) return null;
 
-	const rotateShape = rotateMatrixCW(piece.shape);
-	const candidate = { ...piece, shape: rotateShape };
-	const kicks = [
-		[0, 0],   // 1. normal rotation
-		[-1, 0],  // 2. move to the left if right wall
-		[1, 0],   // 3. move to the right if left wall
-		[0, -1],  // 4. move to the top if floor
-		[-2, 0],  // 5. double left (for I piece)
-		[2, 0],   // 6. double right (for I piece)
-	];
+	if (piece.type === 'O') return piece;
+
+	const newShape = rotateMatrixCW(piece.shape);
+	const candidate = { ...piece, shape: newShape };
+
+	const kicks = piece.type === 'I' ? WALL_KICKS.I : WALL_KICKS.DEFAULT;
 
 	for (const [ox, oy] of kicks) {
 		if (!hasCollision(board, candidate, ox, oy)) {

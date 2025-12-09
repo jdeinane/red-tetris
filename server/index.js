@@ -143,7 +143,7 @@ io.on("connection", (socket) => {
     r.isGameRunning = true;
     r.alive = new Set(Object.keys(r.players));
 
-    const sequence = generateSequence(200);
+    const sequence = generateSequence(10000);
 
     io.to(room).emit("start-game", { 
 		sequence,
