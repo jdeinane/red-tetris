@@ -9,7 +9,7 @@ export default function Play() {
       <div className="content-box">
         <h1 className="title">Play</h1>
 
-        <button className="form-button" onClick={() => navigate("/single")}>
+        <button className="form-button" onClick={() => navigate("/game")}>
           SINGLEPLAYER
         </button>
 

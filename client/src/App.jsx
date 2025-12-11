@@ -3,7 +3,6 @@ import { Routes, Route } from "react-router-dom";
 
 import Home from "./components/Home";
 import Play from "./components/Play";
-import Singleplayer from "./components/SinglePlayer";
 import Multiplayer from "./components/Multiplayer";
 import CreateLobby from "./components/CreateLobby";
 import JoinLobby from "./components/JoinLobby";
@@ -16,7 +15,6 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/play" element={<Play />} />
-      <Route path="/single" element={<Singleplayer />} />
       <Route path="/game" element={<SingleGame />} />
       <Route path="/multi" element={<Multiplayer />} />
       <Route path="/multi/create" element={<CreateLobby />} />
