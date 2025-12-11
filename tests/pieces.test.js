@@ -6,7 +6,7 @@ test("generateBag produces 7 unique pieces", () => {
   expect(new Set(b).size).toBe(7);
 });
 
-test("generateSequence returns expected length", () => {
-  const seq = generateSequence(50);
-  expect(seq.length).toBe(50);
+test("generateSequence uses default size (100) when no argument provided", () => {
+  const seq = generateSequence();
+  expect(seq.length).toBe(100);
 });

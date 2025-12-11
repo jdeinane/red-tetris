@@ -11,8 +11,6 @@ import {
   getGhostPiece
 } from "../shared/tetris.js";
 
-import { PIECE_SHAPES } from "../shared/pieces.js";
-
 describe("Tetris Logic Coverage", () => {
   
   // --- BOARD & PIECES ---
