@@ -14,6 +14,11 @@ export function getOrCreateGame(name, maxPlayers = 4) {
     if (!games[name]) {
         games[name] = new Game(name, limit);
     }
+    else if (cleanupTimers[name]) {
+        clearTimeout(cleanupTimers[name]);
+        delete cleanupTimers[name];
+        console.log(`Room ${name} restored (deletion cancelled)`);
+    }
     return games[name];
 }
 
