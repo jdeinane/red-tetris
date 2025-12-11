@@ -427,6 +427,11 @@ function loop() {
   /* Restart */
 
   function restartGame() {
+    if (onRestart) {
+      onRestart();
+      return;
+    }
+  
     const empty = createEmptyBoard();
     syncBoard(empty);
     syncPiece(null);
@@ -436,6 +441,7 @@ function loop() {
     setHoldType(null);
     canHoldRef.current = true;
     lockStartRef.current = null;
+    lockResetRef.current = 0;
     isGameOverRef.current = false;
     setIsGameOver(false);
     keyStateRef.current = {
