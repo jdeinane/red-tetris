@@ -63,7 +63,7 @@ export default function TetrisGame({
   const rafRef = useRef(null);
 
   const fallInterval = 500;
-  const lockDelay = 350;
+  const lockDelay = 500;
 
   const garbageRef = useRef(0);
 
@@ -303,7 +303,7 @@ export default function TetrisGame({
 
     let lastFall = performance.now();
 
-    function loop() {
+function loop() {
       if (isGameOverRef.current) return;
 
       if (!pieceRef.current) spawnPiece();
@@ -312,14 +312,21 @@ export default function TetrisGame({
       const p = pieceRef.current;
 
       if (p && now - lastFall >= fallInterval) {
-        if (!p) return;
         lastFall = now;
-
         const moved = movePiece(boardRef.current, p, 0, 1);
+        if (moved !== p) {
+          syncPiece(moved);
+          lockStartRef.current = null;
+        }
+      }
 
-        if (moved === p) {
-          if (lockStartRef.current === null) lockStartRef.current = now;
-          else if (now - lockStartRef.current >= lockDelay) {
+      if (p && hasCollision(boardRef.current, p, 0, 1)) {
+        
+        if (lockStartRef.current === null) {
+            lockStartRef.current = now;
+        } 
+        
+        else if (now - lockStartRef.current >= lockDelay) {
             const merged = mergePiece(boardRef.current, p);
             const clearResult = clearLines(merged);
             const cleaned = clearResult.board;
@@ -332,15 +339,10 @@ export default function TetrisGame({
             canHoldRef.current = true;
             lockStartRef.current = null;
 
-            if (cleaned[0].some((c) => c !== 0)) {
-              isGameOverRef.current = true;
-              setIsGameOver(true);
-              notifyGameOver();
-            }
-          }
-        } else {
-          syncPiece(moved);
-          lockStartRef.current = null;
+        }
+      } else {
+        if (lockStartRef.current !== null) {
+            lockStartRef.current = null;
         }
       }
 
