@@ -100,9 +100,12 @@ export default function GamePage() {
 			}));
 		});
 
-		return () => socket.disconnect();
+		return () => {
+			if (socket)
+				socket.disconnect();
+		};
 
-	}, [room, player, isSolo, sequence]);
+	}, [room, player, isSolo]);
 
 	const handleBackToLobby = () => {
 		setSequence(null);

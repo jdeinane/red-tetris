@@ -147,8 +147,9 @@ export default function TetrisGame({
   }
 
   function notifyGameOver() {
-    if (!socket) return;
+    if (!socket || !room || !player) return;
 
+    console.log("Sending Game Over for:", player, "in room:", room);
     socket.emit("player-game-over", {
       room,
       player,
@@ -303,7 +304,7 @@ export default function TetrisGame({
 
     let lastFall = performance.now();
 
-function loop() {
+    function loop() {
       if (isGameOverRef.current) return;
 
       if (!pieceRef.current) spawnPiece();
@@ -339,6 +340,11 @@ function loop() {
             canHoldRef.current = true;
             lockStartRef.current = null;
 
+            if (cleaned[0].some((c) => c !== 0)) {
+              isGameOverRef.current = true;
+              setIsGameOver(true);
+              notifyGameOver();
+            }
         }
       } else {
         if (lockStartRef.current !== null) {
@@ -351,7 +357,7 @@ function loop() {
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [sequence, isGameOver]);
+  }, [sequence, isGameOver, socket, room, player]);
 
 	// --- GARBAGE HANDLING ---
 
@@ -413,7 +419,7 @@ function loop() {
     }, 300);
 
     return () => clearInterval(id);
-  }, []);
+  }, [socket, room, player]);
 
     // --- STOP THE GAME AFTER WINNER ANNOUNCEMENT ---
 
