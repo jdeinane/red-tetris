@@ -73,7 +73,9 @@ io.on("connection", (socket) => {
 
   /* JOIN ROOM */
   socket.on("join-room", ({ room, player, maxPlayers }) => {
-    if (!player || player.trim().length === 0 || player.length > 12) {
+    const username = player ? player.trim() : "";
+  
+    if (!username || username.trim().length === 0 || username.length > 12) {
       socket.emit("join-denied", { reason: "invalid-name" });
       return;
     }
