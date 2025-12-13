@@ -31,7 +31,12 @@ export default function TetrisGame({
   onExit,
   isSolo, }) {
 
-	/* States and Refs */
+/* GAME STATE
+    ----------
+    We use Refs for mutable game state (board, piece, timers) inside the game loop 
+    to avoid closure staleness issues with setInterval/requestAnimationFrame.
+    We use useState only for triggering re-renders (syncBoard, syncPiece).
+  */
 
   const [board, setBoard] = useState(createEmptyBoard());
   const [activePiece, setActivePiece] = useState(null);
@@ -40,16 +45,20 @@ export default function TetrisGame({
   const [isGameOver, setIsGameOver] = useState(false);
   const [holdType, setHoldType] = useState(null);
 
+  // Refs for logic loop access
   const boardRef = useRef(board);
   const pieceRef = useRef(null);
   const indexRef = useRef(0);
   const isGameOverRef = useRef(false);
   const holdTypeRef = useRef(null);
-  const canHoldRef = useRef(true);
+  const canHoldRef = useRef(true); // Prevent infinite holding in one turn
+
+  // Lock Delay Logic (allows sliding piece before lock)
   const lockStartRef = useRef(null);
   const lockResetRef = useRef(0);
   const MAX_LOCK_RESETS = 15;
 
+  // Input Handling
   const keyStateRef = useRef({
     left: false,
     right: false,
@@ -57,19 +66,20 @@ export default function TetrisGame({
     rotateHeld: false,
   });
 
-  const moveTimeoutRef = useRef(null);
-  const moveRepeatRef = useRef(null);
+  const moveTimeoutRef = useRef(null);  // DAS (Delayed Auto Shift)
+  const moveRepeatRef = useRef(null);   // ARR (Auto Repeat Rate)
 
-  const rafRef = useRef(null);
+  const rafRef = useRef(null);          // Request Animation Frame ID
 
-  const fallInterval = 500;
-  const lockDelay = 500;
+  const fallInterval = 500;             // Gravity speed (ms)
+  const lockDelay = 500;                // Time before piece locks on floor
 
-  const garbageRef = useRef(0);
+  const garbageRef = useRef(0);         // Incoming garbage buffer
 
 
 	/* Helpers */
 
+  // Syncs Ref (logic) with State (render)
   function syncBoard(newBoard) {
     boardRef.current = newBoard;
     setBoard(newBoard.map((r) => [...r]));
@@ -80,36 +90,14 @@ export default function TetrisGame({
     setActivePiece(p);
   }
 
-  function collision(board, piece) {
-    const { shape, x, y } = piece;
-    for (let r = 0; r < shape.length; r++) {
-      for (let c = 0; c < shape[r].length; c++) {
-        if (!shape[r][c]) continue;
-        const nx = x + c;
-        const ny = y + r;
-        if (nx < 0 || nx >= board[0].length || ny < 0 || ny >= board.length)
-          return true;
-        if (board[ny][nx]) return true;
-      }
-    }
-    return false;
-  }
 
-  function tryRotate(board, piece) {
-    const rotated = rotatePiece(board, piece);
-    if (rotated === piece) return piece;
-    if (!collision(board, rotated)) return rotated;
-    const right = { ...rotated, x: rotated.x + 1 };
-    if (!collision(board, right)) return right;
-    const left = { ...rotated, x: rotated.x - 1 };
-    if (!collision(board, left)) return left;
-    return piece;
-  }
+  /* GAME LOGIC */
 
-  // --- SPAWN PIECE ---
-
+  // Spawns the next piece from the sequence
   function spawnPiece() {
     if (!sequence || isGameOverRef.current) return;
+
+    // Check if we ran out of pieces
     if (indexRef.current >= sequence.length) {
       isGameOverRef.current = true;
       setIsGameOver(true);
@@ -121,19 +109,20 @@ export default function TetrisGame({
     setIndex(indexRef.current);
     const newPiece = createPiece(type, spawn);
 
-	if (hasCollision(boardRef.current, newPiece)) {
-		isGameOverRef.current = true;
-		setIsGameOver(true);
-		notifyGameOver();
-		return;
-	}
+    // Immediate collision on spawn = Game Over
+    if (hasCollision(boardRef.current, newPiece)) {
+      isGameOverRef.current = true;
+      setIsGameOver(true);
+      notifyGameOver();
+      return;
+    }
 
     syncPiece(newPiece);
     lockStartRef.current = null;
     lockResetRef.current = 0;
-  }
+    }
 
-  /* Server Events */
+/* SERVER COMMUNICATION */
 
   function notifyLinesCleared(clearedLines) {
     if (!clearedLines) return;
@@ -156,15 +145,15 @@ export default function TetrisGame({
     });
   }
 
-  // --- HOLD ---
-
+  // --- HOLD MECHANIC ---
   function handleHold() {
     if (!pieceRef.current || !canHoldRef.current || isGameOverRef.current)
       return;
     if (holdTypeRef.current === null) {
+      // First hold: Store piece, spawn next
       holdTypeRef.current = pieceRef.current.type;
       setHoldType(holdTypeRef.current);
-      syncPiece(null);
+      syncPiece(null); // will trigger spawn in loop
       canHoldRef.current = false;
       lockStartRef.current = null;
       return;
@@ -178,26 +167,28 @@ export default function TetrisGame({
   }
 
   // --- HARD DROP ---
-
   function handleHardDrop() {
     if (!pieceRef.current || isGameOverRef.current) return;
 
+    // Calculate drop position
     const dropped = hardDrop(boardRef.current, pieceRef.current);
     const withPiece = mergePiece(boardRef.current, dropped);
 
+    // Clear lines
     const clearResult = clearLines(withPiece);
     const cleaned = clearResult.board;
     const clearedLines = clearResult.clearedLines || 0;
 
+    // Send malus
     notifyLinesCleared(clearedLines);
 
+    // Update game state
     syncBoard(cleaned);
     syncPiece(null);
     canHoldRef.current = true;
     lockStartRef.current = null;
 
   }
-
 
   function resetLockTimer() {
     if (lockResetRef.current < MAX_LOCK_RESETS) {
@@ -206,8 +197,8 @@ export default function TetrisGame({
     }
   }
 
-  // --- AUTO MOVE (DAS/ARR) ---
-
+  /* INPUT HANDLING (DAS/ARR) */
+  // Allows smooth movement when holding a key
   function startAutoMove(direction) {
     if (!pieceRef.current)
       return;
@@ -215,12 +206,14 @@ export default function TetrisGame({
     clearTimeout(moveTimeoutRef.current);
     clearInterval(moveRepeatRef.current);
 
+    // Initial move
     const initial = movePiece(boardRef.current, pieceRef.current, direction, 0);
     if (initial !== pieceRef.current) {
       syncPiece(initial);
       resetLockTimer();
     }
 
+    // Start auto-repeat after delay
     moveTimeoutRef.current = setTimeout(() => {
       moveRepeatRef.current = setInterval(() => {
         const moved = movePiece(boardRef.current, pieceRef.current, direction, 0);
@@ -228,16 +221,17 @@ export default function TetrisGame({
           syncPiece(moved);
           resetLockTimer();
         }
-      }, 50);
-    }, 150);
+      }, 50); // Speed of repetition
+    }, 150);  // Delay before repetition
   }
 
-  /* Key Input */
 
+  /* KEY LISTENERS */
   useEffect(() => {
     function rotateOnce() {
       if (!pieceRef.current || isGameOverRef.current) return;
       const p = pieceRef.current;
+      // rotatePiece handles Wall Kicks internally
       const rotated = rotatePiece(boardRef.current, p);
       if (rotated !== p) {
         syncPiece(rotated);
@@ -297,8 +291,8 @@ export default function TetrisGame({
     };
   }, []);
 
-  // --- GRAVITY LOOP ---
 
+  /* MAIN GAME LOOP (GRAVITY) */
   useEffect(() => {
     if (!sequence || isGameOverRef.current) return;
 
@@ -312,22 +306,24 @@ export default function TetrisGame({
       const now = performance.now();
       const p = pieceRef.current;
 
+      // Gravity Fall
       if (p && now - lastFall >= fallInterval) {
         lastFall = now;
         const moved = movePiece(boardRef.current, p, 0, 1);
         if (moved !== p) {
           syncPiece(moved);
-          lockStartRef.current = null;
+          lockStartRef.current = null; // Reset lock if fell
         }
       }
 
+      // Lock Logic (if collision below)
       if (p && hasCollision(boardRef.current, p, 0, 1)) {
-        
         if (lockStartRef.current === null) {
-            lockStartRef.current = now;
+            lockStartRef.current = now; // Start lock timer
         } 
         
         else if (now - lockStartRef.current >= lockDelay) {
+            // Timer expired -> Lock Piece
             const merged = mergePiece(boardRef.current, p);
             const clearResult = clearLines(merged);
             const cleaned = clearResult.board;
@@ -340,6 +336,7 @@ export default function TetrisGame({
             canHoldRef.current = true;
             lockStartRef.current = null;
 
+            // Top Out Check
             if (cleaned[0].some((c) => c !== 0)) {
               isGameOverRef.current = true;
               setIsGameOver(true);
@@ -347,6 +344,7 @@ export default function TetrisGame({
             }
         }
       } else {
+        // No collision below, reset lock timer
         if (lockStartRef.current !== null) {
             lockStartRef.current = null;
         }
@@ -359,8 +357,9 @@ export default function TetrisGame({
     return () => cancelAnimationFrame(rafRef.current);
   }, [sequence, isGameOver, socket, room, player]);
 
-	// --- GARBAGE HANDLING ---
 
+  /* GARBAGE HANDLING */
+  // Receives garbage via custom event (from GamePage socket listener)
   useEffect(() => {
     function handleGarbage(e) {
       garbageRef.current += e.detail;
@@ -370,6 +369,7 @@ export default function TetrisGame({
     return () => window.removeEventListener("add-garbage", handleGarbage);
   }, []);
 
+  // Apply garbage periodically (not instantly to avoid weird glitches)
   useEffect(() => {
     const id = setInterval(() => {
       if (garbageRef.current > 0 && !isGameOverRef.current) {
@@ -380,6 +380,7 @@ export default function TetrisGame({
         );
 
         if (updated === null) {
+          // Garbage pushed player out of bounds -> Loss
           garbageRef.current = 0;
           isGameOverRef.current = true;
           setIsGameOver(true);
@@ -387,6 +388,7 @@ export default function TetrisGame({
           return;
         }
   
+        // Adjust active piece Y position if board moved up
         if (pieceRef.current) {
           const adjustedPiece = {
             ...pieceRef.current,
@@ -403,8 +405,9 @@ export default function TetrisGame({
     return () => clearInterval(id);
   }, []);
 
-    // --- SPECTRUM UPDATE ---
 
+  /* SPECTRUM UPDATE */
+  // Send board state to server periodically
   useEffect(() => {
     const id = setInterval(() => {
       if (!socket || isGameOverRef.current) return;
@@ -416,13 +419,13 @@ export default function TetrisGame({
         player,
         spectrum,
       });
-    }, 300);
+    }, 300); // 3 times per second
 
     return () => clearInterval(id);
   }, [socket, room, player]);
 
-    // --- STOP THE GAME AFTER WINNER ANNOUNCEMENT ---
 
+  // Force stop if game ended externally (multiplayer result)
 	useEffect(() => {
 	if (endGame) {
 		isGameOverRef.current = true;
@@ -430,14 +433,15 @@ export default function TetrisGame({
 	}
 	}, [endGame]);
 
-  /* Restart */
 
+  //* RESTART LOGIC (SOLO) */
   function restartGame() {
     if (onRestart) {
       onRestart();
       return;
     }
   
+    // Local restart
     const empty = createEmptyBoard();
     syncBoard(empty);
     syncPiece(null);
@@ -458,17 +462,13 @@ export default function TetrisGame({
     };
   }
 
-	/* Next Piece */
+  // --- RENDER ---
+const nextType =
+  sequence && indexRef.current < sequence.length
+    ? sequence[indexRef.current]
+    : null;
 
-  const nextType =
-    sequence && indexRef.current < sequence.length
-      ? sequence[indexRef.current]
-      : null;
-
-  const safeSpectrums = spectrums || {};
-
-
-  /* Render */
+const safeSpectrums = spectrums || {};
 
 return (
     <div

@@ -6,32 +6,40 @@ import { fileURLToPath } from "url";
 import { games, getOrCreateGame, removeEmptyGame } from "./Game.js";
 import { generateSequence } from "../shared/pieces.js";
 
-/*   This file contains the heart of the server, it handles:
-      - the players' connections 
-      - the rooms
-      - the host
-      - the game start
-      - the pieces distrubution */
+/* SERVER ENTRY POINT
+  ------------------
+  Handles:
+  - HTTP Server (Express)
+  - WebSocket Server (Socket.io)
+  - Game Rooms management
+  - Player connections/disconnections
+  - Network Protocol (events)
+*/
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* Create Server + socket.io */
+/* Initialize Express + HTTP server */
 const app = express();
 const server = http.createServer(app);
+
+/* Initialize socket.io with CORS allowed for all origins */
 const io = new Server(server, {
   cors: { origin: "*"},
 });
 
-// PROD MODE
-/* app.use(express.static(path.join(__dirname, "../client/dist")));
+/* Serving client files (PROD MODE) */
+// app.use(express.static(path.join(__dirname, "../client/dist")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+// });
+
+
+/**
+ * Returns a list of available rooms for the lobby.
+ * Maps the 'games' object to an array of simplified room objects.
  */
-
-/* Lobby selection */
 function getRoomsList() {
 	return Object.entries(games).map(([name, game]) => ({
 		name,
@@ -41,7 +49,10 @@ function getRoomsList() {
 	}));
 }
 
-/* HELPER: Check winner */
+/**
+ * Checks if there is a winner in a room.
+ * If only one player remains in the 'alive' set, they win.
+ */
 function checkWinner(room) {
   if (!room.isGameRunning)
     return;
@@ -64,17 +75,22 @@ function checkWinner(room) {
   }
 }
 
-/* Create a connection for each player */
+/* --- SOCKET EVENT HANDLERS --- */
 io.on("connection", (socket) => {
   console.log("🟢 Connected:", socket.id);
 
-  /* SELECT LOBBY */
+  // Send the list of rooms to the newly connected player
   socket.emit("rooms-list", getRoomsList());
 
-  /* JOIN ROOM */
+    /**
+     * EVENT: join-room
+     * Handles a player trying to join a specific room.
+     */
   socket.on("join-room", ({ room, player, maxPlayers }) => {
+    // 1. Input Sanitization (Trim username)
     const username = player ? player.trim() : "";
-  
+    
+    // 2. Validation
     if (!username || username.trim().length === 0 || username.length > 12) {
       socket.emit("join-denied", { reason: "invalid-name" });
       return;
@@ -82,6 +98,7 @@ io.on("connection", (socket) => {
 
     const r = getOrCreateGame(room, maxPlayers);
 
+    // 3. Check Room Rules
 	  if (Object.keys(r.players).length >= r.maxPlayers) {
 		  socket.emit("join-denied", { reason: "room-full" });
 		  return;
@@ -92,26 +109,31 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // 4. Check Username Uniqueness
     const isNameTaken = Object.values(r.players).some(p => p.username === player);
     if (isNameTaken) {
       socket.emit("join-denied", { reason: "name-taken" });
       return;
     }
 
+    // 5. Join Success
     r.addPlayer(socket.id, player);
     socket.join(room);
 
     console.log(`${player} joined room ${room}`);
 
+    // Broadcast updates
     io.to(room).emit("room-players", r.getPlayersInfo());
-	io.emit("rooms-list", getRoomsList());
+	  io.emit("rooms-list", getRoomsList());
   });
 
-  /* DISCONNECT */
+  /**
+   * EVENT: disconnect
+   * Handles cleanup when a player closes the tab or loses connection.
+   */
   socket.on("disconnect", () => {
     console.log("🔴 Disconnected:", socket.id);
 
-    // Remove player from its room
     const room = removeEmptyGame(socket.id);
 
     if (room) {
@@ -122,23 +144,25 @@ io.on("connection", (socket) => {
 	io.emit("rooms-list", getRoomsList());
   });
 
-  /* START GAME */
+  /**
+   * EVENT: start-game
+   * Triggered by the host to launch the game for everyone in the room.
+   */
   socket.on("start-game", ({ room }) => {
     const r = getOrCreateGame(room);
 
-    // Only host can start the game
+    // Security: Only host can start
     if (socket.id !== r.host)
       return;
-    
     if (r.isGameRunning)
       return;
-
     if (Object.keys(r.players).length < 2)
       return;
 
     r.isGameRunning = true;
     r.alive = new Set(Object.keys(r.players));
 
+    // Generate the SAME sequence of pieces for all players (Fairness)
     const sequence = generateSequence(10000);
 
     io.to(room).emit("start-game", { 
@@ -149,42 +173,50 @@ io.on("connection", (socket) => {
     console.log(`** Game started in room ${room} **`);
   });
 
-  /* PLAYER GAME OVER */
+  /**
+   * EVENT: player-game-over
+   * A client notifies the server they have topped out (lost).
+   */
   socket.on("player-game-over", ({ room }) => {
     const r = getOrCreateGame(room);
-
     r.alive.delete(socket.id);
-
     console.log(`${r.players[socket.id]?.username} died in room ${room}`);
-
     checkWinner(r);
   })
 
-  /* SPECTRUM UPDATE */
+  /**
+   * EVENT: spectrum-update
+   * Relays the visual representation of the board to opponents (Real-time).
+   */ 
   socket.on("spectrum-update", ({ room, player, spectrum }) => {
     const r = getOrCreateGame(room);
     if (!r.isGameRunning)
       return;
 
+    // Send to everyone EXCEPT sender
     socket.to(room).emit("spectrum", {
       from: player,
       spectrum,
     });
   });
 
-  /* LINES CLEARED */
+  /**
+   * EVENT: lines-cleared
+   * Handles the offensive mechanic: sending garbage lines to opponents.
+   */
   socket.on("lines-cleared", ({ room, player, count }) => {
     const r = getOrCreateGame(room);
-
     if (!r.isGameRunning)
       return;
 
+    // Rule: n lines cleared send n-1 garbage lines
     const garbage = Math.max(0, count - 1);
     if (garbage <= 0)
       return;
 
     console.log(`${player} cleared ${count} lines → sending ${garbage} garbage`);
 
+    // Send garbage to opponents
     socket.to(room).emit("garbage", {
       from: player,
       count: garbage,
@@ -192,6 +224,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Start Server on Port 3000
 server.listen(3000, () =>
   console.log("red-tetris Server running on http://localhost:3000")
 );

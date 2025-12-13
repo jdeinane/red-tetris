@@ -1,48 +1,59 @@
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants.js";
 import { PIECE_SHAPES } from "./pieces.js";
 
+/* TETRIS LOGIC
+  ------------
+  This file contains pure functions to manage the game state.
+  It is used by both Client (display/prediction) and Server (validation/tests).
+*/
+
+
+/* Wall Kick Data (SRS - Super Rotation System simplified)
+Offsets to try when a rotation fails (e.g. against a wall) */
 const WALL_KICKS = {
   DEFAULT: [
-		[0, 0],   // 1. normal rotation
-		[-1, 0],  // 2. move to the left if right wall
-		[1, 0],   // 3. move to the right if left wall
-		[0, -1],  // 4. move to the top if floor
-		[-2, 0],  // 5. double left (for I piece)
-		[2, 0],   // 6. double right (for I piece)
-		[-1, -1], // 7. diagonal (complex case)
+		[0, 0],   // 1. Normal rotation
+		[-1, 0],  // 2. Try moving left
+		[1, 0],   // 3. Try moving right
+		[0, -1],  // 4. Try moving up (floor kick)
+		[-2, 0],  // 5. Double left
+		[2, 0],   // 6. Double right
+		[-1, -1], // 7. Diagonal
 		[1, -1],
-		[0, -2],  // 8. heavy ascend (critical case)
-  ],
-  I: [
+		[0, -2],  // 8. High ascend
+	],
+
+/* "I" piece is special (4x4 matrix), needs more aggressive kicks */ 
+	I: [ 
 		[0, 0],
-        [-2, 0],  // 1. double left
-        [2, 0],   // 2. double right
-        [-1, 0],  // 3. simple left
-        [1, 0],   // 4. simple right
-        [-3, 0],  // 5. triple left
-        [3, 0],   // 6. triple right
-        [0, -1],  // 7. top
+        [-2, 0],  // 1. Double left
+        [2, 0],   // 2. Double right
+        [-1, 0],  // 3. Simple left
+        [1, 0],   // 4. Simple right
+        [-3, 0],  // 5. Triple left
+        [3, 0],   // 6. Triple right
+        [0, -1],  // 7. Top
         [-2, -1], 
         [2, -1],
         [0, -2],
-        [0, -3]   // 8. triple top
-]
+        [0, -3]   // 8. Triple top
+	]
 };
 
 
-/* Board helpers: 
-	- creates a 20x10 grid
-	- fills it with 0 (empty) */
+/**
+ * Creates a new empty game board (20 rows x 10 cols).
+ * Filled with 0s.
+ */
 export function createEmptyBoard() {
 	return Array.from({ length: BOARD_HEIGHT }, () =>
 		Array(BOARD_WIDTH).fill(0)
 	);
 }
 
-/* Pieces:
-	- changes the shape of the piece (I, T, L...)
-	- places it in the top center of the board
-	- returns an object */
+/**
+ * Creates a piece object with position and shape.
+ */
 export function createPiece(type, spawn = null) {
 	const shape = PIECE_SHAPES[type];
 	if (!shape) {
@@ -62,10 +73,14 @@ export function createPiece(type, spawn = null) {
 	};
 }
 
-/* Collisions :
-	- checks if the piece touches a side or a block
-	- returns true if there's a collision
-	- returns false otherwise */
+/**
+ * Detects if a piece collides with walls, floor, or existing blocks.
+ * @param {Array} board - The game grid
+ * @param {Object} piece - The piece to check
+ * @param {Number} offsetX - Potential X movement
+ * @param {Number} offsetY - Potential Y movement
+ * @returns {Boolean} - True if collision detected
+ */
 export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 	const { shape, x, y } = piece;
 
@@ -77,7 +92,7 @@ export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 			const newX = x + col + offsetX;
 			const newY = y + row + offsetY;
 
-			// Outside plateau?
+			// 1. Check Boundaries (Walls/Floor)
 			if (
 				newX < 0 			||
 				newX >= BOARD_WIDTH ||
@@ -86,7 +101,8 @@ export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 				return true;
 			}
 
-			// Collision with a block that is already laid?
+			// 2. Check Existing Blocks
+            // Note: We ignore negative Y (sky) to allow spawning
 			if (newY >= 0 && board[newY][newX]) {
 				return true;
 			}
@@ -95,24 +111,25 @@ export function hasCollision(board, piece, offsetX = 0, offsetY = 0) {
 	return false;
 }
 
-/* Movements */
-
-/*	- moves the piece
-	- checks if there's a collision */
+/**
+ * Moves a piece if no collision occurs.
+ */
 export function movePiece(board, piece, dx, dy) {
 	if (!piece) return null;
 	const newPiece = { ...piece, x: piece.x + dx, y: piece.y + dy};
 	return hasCollision(board, newPiece, 0, 0) ? piece : newPiece;
 }
 
-/*	- brings down the piece of one square
-	- checks collision */
+/**
+ * Normal drop
+ */
 export function softDrop(board, piece) {
 	return movePiece(board, piece, 0, 1);
 }
 
-/*	- brings down the piece until it touches the floor
-	- runs until there's collision, returns the last valide position */
+/**
+ * Instantly drops the piece to the lowest valid position (Spacebar action).
+ */
 export function hardDrop(board, piece) {
 	if (!piece) return null;
 	let current = piece;
@@ -122,9 +139,7 @@ export function hardDrop(board, piece) {
 	return current;
 }
 
-/* Rotation */
-
-/* - rotates the matrix clockwise */
+// Helper: Rotates a 2D matrix 90 degrees clockwise
 function rotateMatrixCW(matrix) {
 	const rows = matrix.length;
 	const cols = matrix[0].length;
@@ -138,31 +153,34 @@ function rotateMatrixCW(matrix) {
 	return res;
 }
 
-/*	- does a rotation on the piece
-	- checks collision
-	- if there's collision -> cancel rotation */
+/**
+ * Rotates a piece using Wall Kick data if a basic rotation fails.
+ */
 export function rotatePiece(board, piece) {
 	if (!piece) return null;
 
-	if (piece.type === 'O') return piece;
+	if (piece.type === 'O') return piece; // O shape doesn't rotate
 
 	const newShape = rotateMatrixCW(piece.shape);
 	const candidate = { ...piece, shape: newShape };
 
+	// Select appropriate kick table
 	const kicks = piece.type === 'I' ? WALL_KICKS.I : WALL_KICKS.DEFAULT;
 
+	// Try original position, then try all kick offsets
 	for (const [ox, oy] of kicks) {
 		if (!hasCollision(board, candidate, ox, oy)) {
 			return { ...candidate, x: candidate.x + ox, y: candidate.y + oy };
 		}
 	}
+
+	// All attempts failed, return original piece
 	return piece;
 }
 
-/* Fusion + lines */
-
-/*	- merges the piece to the board
-	- returns a new board */
+/**
+ * Locks the piece into the board (merges matrices).
+ */
 export function mergePiece(board, piece) {
 	const newBoard = board.map((row) => [...row]);
 	const { shape, x, y, type } = piece;
@@ -183,8 +201,10 @@ export function mergePiece(board, piece) {
 	return newBoard;
 }
 
-/*	- goes through each line: if it's full -> remove
-	- add empty lines on top */
+/**
+ * Scans the board for full lines, removes them, and adds new empty lines on top.
+ * Also detects "Garbage Lines" (indestructible lines).
+ */
 export function clearLines(board) {
 	const newBoard = [];
 	let cleared = 0;
@@ -194,11 +214,13 @@ export function clearLines(board) {
 		const isGarbageRow = row.includes("G");
 		const isFull = row.every((cell) => cell !== 0);
 
+		// Garbage rows are skipped (kept as is) but don't count as clearable
 		if (isGarbageRow) {
 			newBoard.push([...row]);
 			continue;
 		}
 
+		// Full line ? Don't add it to newBoard (delete it)
 		if (isFull) {
 			cleared++;
 			continue;
@@ -207,6 +229,7 @@ export function clearLines(board) {
 		newBoard.push([...row]);
 	}
 
+	// Pad the top with empty lines to maintain board height
 	while (newBoard.length < BOARD_HEIGHT)
 		newBoard.unshift(Array(BOARD_WIDTH).fill(0));
 
@@ -249,10 +272,9 @@ export function tick(board, activePiece) {
 	};
 }
 
-/* Ghost piece: transparent shadow that shows where the piece is gonna land:
-	- clones the piece
-	- lets down until it cannot
-	- returns its finale position */
+/**
+ * Calculates where the piece will land (for the Ghost Piece display).
+ */
 export function getGhostPiece(board, piece) {
 	if (!piece) return null;
 	let ghost = { ...piece };
@@ -263,23 +285,25 @@ export function getGhostPiece(board, piece) {
 	return ghost;
 }
 
-/* Garbage Line: when a player clears n lines, others receive n - 1 indestructibles
-	lines at the bottom of their board */
+/**
+ * Adds Penalty Lines (Garbage) to the bottom of the board.
+ * Returns null if this action causes a Game Over (player pushed out of bounds).
+ */
 export function addGarbageLines(board, count) {
 	if (count <= 0)
 		return board;
 
 	const cols = board[0].length;
-
-	// Clone board
 	const newBoard = board.map((row) => [...row]);
 
 	for (let i = 0; i < count; i++) {
+		// If top line is not empty, player dies
 		if (newBoard[0].some(cell => cell !== 0))
 			return null;
 
-		newBoard.shift();
+		newBoard.shift(); // Remove top line
 
+		// Create a garbage line with one random hole
 		const hole = Math.floor(Math.random() * cols);
 		const garbageRow = Array.from({ length: cols }, (_, x) =>
 		x === hole ? 0 : "G"
@@ -292,8 +316,9 @@ export function addGarbageLines(board, count) {
 	return newBoard;
 }
 
-/* Board Spectrum: returns an array of 10 numbers
-	representing the height of each column */
+/**
+ * Generates a "Height Map" of the board for the opponents' view (Spectrum).
+ */
 export function getSpectrum(board) {
 	const cols = board[0].length;
 	const heights = Array(cols).fill(0);
