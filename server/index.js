@@ -110,17 +110,17 @@ io.on("connection", (socket) => {
     }
 
     // 4. Check Username Uniqueness
-    const isNameTaken = Object.values(r.players).some(p => p.username === player);
+    const isNameTaken = Object.values(r.players).some(p => p.username === username);
     if (isNameTaken) {
       socket.emit("join-denied", { reason: "name-taken" });
       return;
     }
 
     // 5. Join Success
-    r.addPlayer(socket.id, player);
+    r.addPlayer(socket.id, username);
     socket.join(room);
 
-    console.log(`${player} joined room ${room}`);
+    console.log(`${username} joined room ${room}`);
 
     // Broadcast updates
     io.to(room).emit("room-players", r.getPlayersInfo());
