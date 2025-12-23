@@ -28,33 +28,37 @@ export default function JoinLobby() {
         <h1 className="title">Join a Lobby</h1>
 
         {rooms.length === 0 && (
-          <p style={{ opacity: 0.7 }}>No rooms available yet…</p>
+          <p style={{ opacity: 0.7, fontStyle: "italic" }}>No rooms available...</p>
         )}
 
-        {rooms.map((room) => (
-          <div key={room.name} style={{ marginBottom: "15px" }}>
-            <p>
-              ❄ {room.name} — {room.current}/{room.max}
-            </p>
+        <ul>
+          {rooms.map((room) => (
+            <li key={room.name}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                 <span style={{ fontWeight: 'bold' }}>{room.name}</span>
+                 <span style={{ fontSize: '0.8em', opacity: 0.6 }}>{room.current} / {room.max} players</span>
+              </div>
 
-        {room.isPlaying ? (
-            <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
-              Game Running
-            </button>
-          ) : room.current >= room.max ? (
-            <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
-              Full
-            </button>
-          ) : (
-            <button
-              className="form-button"
-              onClick={() => navigate(`/multi/join/${room.name}`)}
-            >
-              REJOINDRE
-            </button>
-          )}
-        </div>
-        ))}
+              {room.isPlaying ? (
+                <button className="form-button" disabled style={{ width: 'auto', padding: '8px 16px', fontSize: '0.8rem' }}>
+                  Running
+                </button>
+              ) : room.current >= room.max ? (
+                <button className="form-button" disabled style={{ width: 'auto', padding: '8px 16px', fontSize: '0.8rem' }}>
+                  Full
+                </button>
+              ) : (
+                <button
+                  className="form-button"
+                  onClick={() => navigate(`/multi/join/${room.name}`)}
+                  style={{ width: 'auto', padding: '8px 16px', fontSize: '0.8rem' }}
+                >
+                  JOIN
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
