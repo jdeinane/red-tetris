@@ -11,14 +11,12 @@ export default function LobbyPage({ socket, players, gameRunning }) {
       <div className="content-box">
         <h1 className="title">Lobby : {room}</h1>
         
-        {/* Petit badge pour le joueur actuel */}
         <div style={{ marginBottom: "20px", color: "var(--text-secondary)" }}>
            You are: <strong style={{ color: "white" }}>{player}</strong> {isHost && "(HOST)"}
         </div>
 
         <h3 style={{ alignSelf: "flex-start", fontSize: "1rem" }}>Players ({players.length})</h3>
         
-        {/* La liste ul/li profite automatiquement du style Glass de index.css */}
         <ul>
           {players.map((p) => (
             <li key={p.id}>

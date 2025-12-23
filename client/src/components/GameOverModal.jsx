@@ -5,7 +5,7 @@ export default function GameOverModal({ result, winner, onConfirm, onQuit }) {
     <div className="modal-overlay">
       <div className="modal-content">
         <h1 style={{ 
-          color: result === "win" ? "var(--S)" : "var(--Z)", // Vert si victoire, Rouge si défaite
+          color: result === "win" ? "var(--S)" : "var(--Z)",
           fontSize: "2.5rem", 
           marginBottom: "10px",
           textShadow: "0 0 15px currentColor"
@@ -20,12 +20,10 @@ export default function GameOverModal({ result, winner, onConfirm, onQuit }) {
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-          {/* Bouton Principal */}
           <button className="btn" onClick={onConfirm}>
             Back to Lobby
           </button>
 
-          {/* Bouton Secondaire (plus discret) */}
           <button 
             className="btn" 
             onClick={onQuit}
