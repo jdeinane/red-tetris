@@ -1,4 +1,3 @@
-import "./nextpiece.css";
 import { PIECE_SHAPES } from "../../../shared/pieces.js";
 
 export default function HoldPiece({ type }) {

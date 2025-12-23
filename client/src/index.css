@@ -1,101 +1,383 @@
-body {
+/* =========================================
+   1. VARIABLES & PALETTE
+   ========================================= */
+:root {
+  /* ===== BACKGROUND ===== */
+  --bg-dark: #2b3245;
+  --bg-mid: #3a4360;
+  --bg-light: #6b7896;
+  --wave-color: rgba(255, 255, 255, 0.25);
+
+  /* ===== GLASS CONFIG ===== */
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --glass-blur: 14px;
+
+  /* ===== TEXT ===== */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+
+  /* ===== TETRIS COLORS ===== */
+  --I: rgba(90, 220, 255, 0.85);
+  --J: rgba(120, 140, 255, 0.85);
+  --L: rgba(255, 180, 90, 0.85);
+  --O: rgba(255, 235, 160, 0.85);
+  --S: rgba(120, 255, 190, 0.85);
+  --T: rgba(210, 160, 255, 0.85);
+  --Z: rgba(255, 150, 170, 0.85);
+  
+  --ghost: rgba(255, 255, 255, 0.1);
+  --garbage: #5a5a5a;
+  
+  --border-radius-lg: 22px;
+  --border-radius-sm: 12px;
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* =========================================
+   2. RESET & BACKGROUND ANIMATED
+   ========================================= */
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  width: 100%;
-  background: url("/cyberpunk-bg.jpg") no-repeat center center fixed;
-  background-size: cover;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Press Start 2P', monospace;
-  color: #fff;
 }
 
-/* DARK TRANSLUCENT OVERLAY FOR READABILITY */
-.page-container {
+html, body {
+  height: 100%;
   width: 100%;
-  min-height: 100vh;
-  backdrop-filter: blur(6px);
-  background: rgba(10, 10, 25, 0.65);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  overflow: hidden;
 }
 
-/* NEON CYBERPUNK PANEL */
-.content-box {
-  background: rgba(20, 20, 35, 0.8);
+body {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.15), transparent 45%),
+    linear-gradient(135deg, var(--bg-dark), var(--bg-mid), var(--bg-light));
+  position: relative;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: absolute;
+  width: 140%;
+  height: 140%;
+  left: -20%;
+  top: 30%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--wave-color) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  top: 45%;
+  opacity: 0.6;
+  transform: rotate(3deg);
+}
+
+#root {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  width: 100%;
+}
+
+/* =========================================
+   3. LAYOUT & GLASS COMPONENTS
+   ========================================= */
+
+/* Mixin Glass */
+.glass-panel, .content-box, .card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--border-radius-lg);
   padding: 40px;
-  border-radius: 12px;
-  width: 350px;
+  color: var(--text-primary);
+}
+
+/* Main containers */
+.page-container, .app-container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  flex: 1;
+}
+
+.content-box {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   text-align: center;
-  border: 2px solid rgba(255, 0, 255, 0.35);
-  box-shadow:
-    0 0 20px rgba(255, 0, 255, 0.4),
-    0 0 50px rgba(0, 200, 255, 0.3);
 }
 
-/* TITLE */
-.title {
-  font-size: 28px;
-  margin-bottom: 30px;
-  text-shadow: 0 0 10px #ff00ff, 0 0 20px #00eaff;
+/* Titles */
+.title, h1, h2, h3 {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 0.5em;
 }
 
-/* NEON INPUTS */
-.form-input {
+/* Lists (Lobby) */
+ul {
+  list-style: none;
   width: 100%;
-  padding: 12px;
-  font-size: 14px;
-  margin-bottom: 15px;
-  border-radius: 6px;
-  border: 2px solid rgba(255, 0, 255, 0.5);
-  background: rgba(0, 0, 0, 0.5);
+  padding: 0;
+}
+
+li {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+  transition: 0.2s;
+}
+
+li:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--glass-border);
+}
+
+/* =========================================
+   4. FORM ELEMENTS (Inputs & Buttons)
+   ========================================= */
+
+/* Inputs */
+input, .form-input {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  padding: 14px;
+  border-radius: var(--border-radius-sm);
   color: white;
+  width: 100%;
+  font-size: 1rem;
   outline: none;
+  transition: 0.3s;
+  margin-bottom: 10px;
 }
 
-.form-input:focus {
-  box-shadow: 0 0 10px #ff00ff;
+input:focus, .form-input:focus {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* NEON BUTTONS */
-.form-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  background: linear-gradient(90deg, #ff00ff, #00eaff);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-weight: bold;
+input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Buttons */
+button, .form-button, .btn {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 14px 24px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: 0.2s ease;
-  text-shadow: 0 0 4px #000;
-  box-shadow:
-    0 0 10px rgba(255, 0, 255, 0.4),
-    0 0 20px rgba(0, 200, 255, 0.3);
+  transition: all 0.25s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.form-button:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow:
-    0 0 20px rgba(255, 0, 255, 0.6),
-    0 0 35px rgba(0, 200, 255, 0.5);
+button:hover, .form-button:hover, .btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.form-button:disabled {
-  opacity: 0.4;
+button:disabled, .form-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* LIST OF PLAYERS IN LOBBY */
-.player-list li {
-  margin: 6px 0;
-  padding: 6px;
-  background: rgba(40, 40, 70, 0.7);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 0, 255, 0.3);
-  text-shadow: 0 0 4px #000;
+/* Selection Buttons */
+.max-players-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
 }
+
+.max-player-button {
+  flex: 1;
+  padding: 10px;
+}
+
+.max-player-button-selected {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: white;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* =========================================
+   5. TETRIS BOARD
+   ========================================= */
+
+/* Main container */
+.game-container {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+/* Game Board */
+.board {
+  display: grid;
+  grid-template-rows: repeat(20, 30px);
+  grid-template-columns: repeat(10, 30px);
+  gap: 2px;
+  padding: 10px;
+  
+  /* Glass Style */
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Cells */
+.cell {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.cell-empty {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* Block colors */
+.cell-I, .next-I { background: var(--I); box-shadow: 0 0 10px var(--I); border: 1px solid rgba(255,255,255,0.4); }
+.cell-J, .next-J { background: var(--J); box-shadow: 0 0 10px var(--J); border: 1px solid rgba(255,255,255,0.4); }
+.cell-L, .next-L { background: var(--L); box-shadow: 0 0 10px var(--L); border: 1px solid rgba(255,255,255,0.4); }
+.cell-O, .next-O { background: var(--O); box-shadow: 0 0 10px var(--O); border: 1px solid rgba(255,255,255,0.4); }
+.cell-S, .next-S { background: var(--S); box-shadow: 0 0 10px var(--S); border: 1px solid rgba(255,255,255,0.4); }
+.cell-T, .next-T { background: var(--T); box-shadow: 0 0 10px var(--T); border: 1px solid rgba(255,255,255,0.4); }
+.cell-Z, .next-Z { background: var(--Z); box-shadow: 0 0 10px var(--Z); border: 1px solid rgba(255,255,255,0.4); }
+
+/* Ghost Piece */
+.cell-ghost {
+  background: var(--ghost);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+}
+
+/* Garbage Line */
+.cell-G {
+  background: var(--garbage);
+  border: 1px solid rgba(0,0,0,0.5);
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* =========================================
+   6. NEXT PIECE & SIDE PANELS
+   ========================================= */
+
+.next-container {
+  /* Style Glass for 'Next' grid */
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-sm);
+  padding: 20px;
+  text-align: center;
+  min-width: 140px;
+}
+
+.next-container h3 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+}
+
+.next-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 20px);
+  grid-template-rows: repeat(4, 20px);
+  gap: 2px;
+  justify-content: center;
+}
+
+.next-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+}
+
+.next-empty {
+  background: transparent;
+}
+
+/* =========================================
+   7. MODALES (Game Over)
+   ========================================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #2b3245;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  padding: 40px;
+  border-radius: 24px;
+  text-align: center;
+  max-width: 400px;
+  color: white;
+  animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+

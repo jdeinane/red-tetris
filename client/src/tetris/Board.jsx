@@ -1,5 +1,3 @@
-import "./board.css";
-
 export default function Board({ board, activePiece, ghostPiece }) {
   const displayBoard = board.map(row => [...row]);
 

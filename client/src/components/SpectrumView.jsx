@@ -1,55 +1,44 @@
+import React from "react";
+
 export default function SpectrumView({ name, spectrum }) {
-	if (!spectrum)
-		return null;
+  if (!spectrum) return null;
 
   return (
-    <div style={{
-      textAlign: "center",
-      marginBottom: "15px",
-      padding: "8px 12px",
-      background: "rgba(0,0,0,0.4)",
-      borderRadius: "8px",
-      backdropFilter: "blur(4px)",
-      border: "1px solid rgba(255,255,255,0.15)",
-    }}>
+    <div className="glass-panel" style={{ padding: "15px", marginBottom: "15px", minWidth: "120px" }}>
       <h4 style={{
-        color: "white",
-        margin: 0,
-        fontSize: "14px",
-        marginBottom: "6px",
-        textShadow: "0 0 5px rgba(255,255,255,0.4)",
+        margin: "0 0 10px 0",
+        fontSize: "0.9rem",
+        color: "var(--text-secondary)",
+        letterSpacing: "1px",
+        textTransform: "uppercase"
       }}>
         {name}
       </h4>
 
       <div style={{
         display: "flex",
-        gap: "3px",
+        gap: "4px",
         height: "80px",
         alignItems: "flex-end",
+        justifyContent: "center"
       }}>
         {spectrum.map((h, i) => {
-
           const pct = h / 20;
-          let color = "#34ff5a";
-          if (pct > 0.5) color = "#ffd23f";
-          if (pct > 0.75) color = "#ff6961";
+          let bg = "var(--S)"; 
+          if (pct > 0.5) bg = "var(--O)";
+          if (pct > 0.75) bg = "var(--Z)";
 
           return (
             <div
               key={i}
               style={{
                 width: "8px",
-                height: `${h * 4}px`,
-                background: color,
+                height: `${Math.min(h * 4, 80)}px`,
+                background: bg,
                 borderRadius: "2px",
-                transition: "height 0.15s ease, background 0.2s ease",
-                boxShadow:
-                  pct > 0.75
-                    ? "0 0 8px rgba(255,0,0,0.7)"
-                    : pct > 0.5
-                    ? "0 0 6px rgba(255,200,0,0.5)"
-                    : "none",
+                transition: "all 0.3s ease",
+                boxShadow: pct > 0.5 ? `0 0 8px ${bg}` : "none",
+                opacity: 0.9
               }}
             />
           );
