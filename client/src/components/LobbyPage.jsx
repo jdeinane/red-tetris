@@ -7,43 +7,54 @@ export default function LobbyPage({ socket, players, gameRunning }) {
   const isHost = me?.isHost;
 
   return (
-    <div>
-      <h1>Lobby — Room: {room}</h1>
-      <h2>Player: {player} {isHost && "(HOST)"}</h2>
+    <div className="page-container">
+      <div className="content-box">
+        <h1 className="title">Lobby : {room}</h1>
+        
+        {/* Petit badge pour le joueur actuel */}
+        <div style={{ marginBottom: "20px", color: "var(--text-secondary)" }}>
+           You are: <strong style={{ color: "white" }}>{player}</strong> {isHost && "(HOST)"}
+        </div>
 
-      <h3>Players:</h3>
-      <ul>
-        {players.map((p) => (
-          <li key={p.id}>
-            {p.username} {p.isHost ? "(HOST)" : ""}
-          </li>
-        ))}
-      </ul>
+        <h3 style={{ alignSelf: "flex-start", fontSize: "1rem" }}>Players ({players.length})</h3>
+        
+        {/* La liste ul/li profite automatiquement du style Glass de index.css */}
+        <ul>
+          {players.map((p) => (
+            <li key={p.id}>
+              <span>{p.username}</span>
+              {p.isHost && <span style={{ opacity: 0.5, fontSize: "0.8em" }}>👑 HOST</span>}
+            </li>
+          ))}
+        </ul>
 
-      {isHost && (
-        gameRunning ? (
-          <button className="form-button" disabled style={{ opacity: 0.5, cursor: "wait" }}>
-            Game is still running...
-          </button>
-        ) : players.length < 2 ? (
-          <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
-            Waiting for players...
-          </button>
-        ) : (
-          <button 
-            className="form-button"
-            onClick={() => socket.emit("start-game", { room })}
-          >
-            Start Game
-          </button>
-        )
-      )}
+        <div style={{ marginTop: "20px", width: "100%" }}>
+          {isHost && (
+            gameRunning ? (
+              <button className="form-button" disabled style={{ opacity: 0.5, cursor: "wait" }}>
+                Game in progress...
+              </button>
+            ) : players.length < 2 ? (
+              <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
+                Waiting for players...
+              </button>
+            ) : (
+              <button 
+                className="form-button"
+                onClick={() => socket.emit("start-game", { room })}
+              >
+                START GAME
+              </button>
+            )
+          )}
 
-      {!isHost && gameRunning && (
-          <p style={{ color: "#aaa", marginTop: "20px" }}>
-              Waiting for game to finish...
-          </p>
-      )}
+          {!isHost && (
+             <p style={{ marginTop: "15px", fontStyle: "italic", opacity: 0.7 }}>
+                {gameRunning ? "Game is running..." : "Waiting for host to start..."}
+             </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
