@@ -12,8 +12,14 @@ export default function SingleGame() {
   };
 
   return (
-    <div>
-      <h1>Singleplayer</h1>
+    <div style={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      alignItems: "center", 
+      width: "100%" 
+    }}>
+      <h1 className="title" style={{ marginBottom: "20px" }}>Singleplayer</h1>
+      
       <TetrisGame
         key={gameId}
         sequence={sequence}

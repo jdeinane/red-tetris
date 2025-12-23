@@ -523,117 +523,72 @@ return (
 
       {/* LOCAL GAME OVER (ELIMINATED / SOLO) */}
       {isGameOver && !endGame && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(4px)",
-            padding: "40px",
-            color: "white",
-            borderRadius: "12px",
-            textAlign: "center",
-            border: "1px solid rgba(255, 0, 0, 0.5)",
-            width: "300px",
-            zIndex: 10
-          }}
-        >
-          <h1 style={{ 
-            color: "#ff4444", 
-            textShadow: "0 0 10px rgba(255,0,0,0.5)",
-            fontSize: "28px",
-            marginBottom: "10px"
-          }}>
-            {isSolo ? "GAME OVER" : "ELIMINATED"}
-          </h1>
-          
-          {!isSolo && (
-            <>
-                <div className="loader" style={{ marginBottom: "20px", fontSize: "12px", opacity: 0.8 }}>
-                    Waiting for winner...
-                </div>
-                <p style={{ fontSize: "11px", color: "#aaa", marginBottom: "20px" }}>
-                    Watch the spectrums on the right!
-                </p>
-            </>
-          )}
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
-            {isSolo ? (
-                <>
-                    <button
-                        onClick={restartGame}
-                        style={{
-                            padding: "10px 20px",
-                            fontSize: "16px",
-                            cursor: "pointer",
-                            background: "linear-gradient(90deg, #ff00ff, #00eaff)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            width: "100%",
-                            fontWeight: "bold"
-                        }}
-                    >
-                        RETRY
-                    </button>
-                    <button
-                        onClick={onExit}
-                        style={{
-                            padding: "8px 16px",
-                            fontSize: "14px",
-                            cursor: "pointer",
-                            background: "transparent",
-                            color: "#aaa",
-                            border: "1px solid #555",
-                            borderRadius: "6px",
-                            width: "100%"
-                        }}
-                    >
-                        MAIN MENU
-                    </button>
-                </>
-            ) : (
-                <>
-                    <button
-                        onClick={onRestart}
-                        style={{
-                            padding: "10px 20px",
-                            fontSize: "14px",
-                            cursor: "pointer",
-                            background: "rgba(255, 255, 255, 0.1)",
-                            color: "#ddd",
-                            border: "1px solid #555",
-                            borderRadius: "6px",
-                            transition: "background 0.2s",
-                            width: "100%"
-                        }}
-                        onMouseOver={(e) => e.target.style.background = "rgba(255, 0, 0, 0.3)"}
-                        onMouseOut={(e) => e.target.style.background = "rgba(255, 255, 255, 0.1)"}
-                    >
-                        Leave to Lobby
-                    </button>
-                    <button
-                        onClick={onExit}
-                        style={{
-                            padding: "8px 16px",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            background: "transparent",
-                            color: "#888",
-                            border: "none",
-                            textDecoration: "underline"
-                        }}
-                    >
-                        Quit to Main Menu
-                    </button>
-                </>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h1 style={{ 
+              color: isSolo ? "var(--Z)" : "var(--text-primary)", 
+              fontSize: "2.5rem", 
+              marginBottom: "1rem",
+              textShadow: "0 0 15px currentColor"
+            }}>
+              {isSolo ? "GAME OVER" : "ELIMINATED"}
+            </h1>
+            
+            {!isSolo && (
+              <div style={{ marginBottom: "20px" }}>
+                  <p className="loader" style={{ marginBottom: "10px", color: "var(--text-secondary)" }}>
+                      Waiting for winner...
+                  </p>
+                  <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
+                      Watch the spectrums on the right!
+                  </p>
+              </div>
             )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+              {isSolo ? (
+                  <>
+                      {/* BOUTON RETRY */}
+                      <button className="btn" onClick={restartGame}>
+                          RETRY
+                      </button>
+                      
+                      {/* BOUTON MAIN MENU */}
+                      <button
+                          className="btn"
+                          onClick={onExit}
+                          style={{ 
+                              background: "transparent", 
+                              border: "1px solid var(--glass-border)", 
+                              opacity: 0.8 
+                          }}
+                      >
+                          MAIN MENU
+                      </button>
+                  </>
+              ) : (
+                  <>
+                      <button className="btn" onClick={onRestart}>
+                          Leave to Lobby
+                      </button>
+                      <button
+                          className="btn"
+                          onClick={onExit}
+                          style={{ 
+                              background: "transparent", 
+                              border: "none", 
+                              fontSize: "0.8rem", 
+                              opacity: 0.7 
+                          }}
+                      >
+                          Quit to Main Menu
+                      </button>
+                  </>
+              )}
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </div> 
   );
 }
