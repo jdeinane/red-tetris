@@ -7,9 +7,9 @@ export default function Home() {
   return (
     <div className="page-container">
       <div className="content-box">
-        <h1 className="title">Red Tetris</h1>
+        <h1 className="title">pink tetris</h1>
         <button className="form-button" onClick={() => navigate("/play")}>
-          PLAY
+          Play !
         </button>
       </div>
     </div>

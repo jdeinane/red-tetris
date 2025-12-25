@@ -1,7 +1,17 @@
 /* =========================================
    1. VARIABLES & PALETTE
    ========================================= */
+
+@font-face {
+  font-family: 'BBH Hegarty';
+  src: url('/fonts/BBHHegarty-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  --font-main: 'BBH Hegarty', 'Segoe UI', sans-serif;
   /* ===== BACKGROUND ===== */
   --bg-dark: #2b3245;
   --bg-mid: #3a4360;
@@ -34,7 +44,7 @@
   --border-radius-lg: 22px;
   --border-radius-sm: 12px;
 
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  font-family: var(--font-main);
   color: var(--text-primary);
   line-height: 1.5;
 }
@@ -167,6 +177,7 @@ input::placeholder {
 
 /* Buttons */
 button, .form-button, .btn {
+  font-family: var(--font-main);
   background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
@@ -178,7 +189,6 @@ button, .form-button, .btn {
   font-weight: 600;
   outline: none;
   width: 100%;
-  text-transform: uppercase;
   letter-spacing: 1px;
 }
 

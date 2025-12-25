@@ -7,14 +7,14 @@ export default function Play() {
   return (
     <div className="page-container">
       <div className="content-box">
-        <h1 className="title">Play</h1>
+        <h1 className="title">Select Game Mode</h1>
 
         <button className="form-button" onClick={() => navigate("/game")}>
-          SINGLEPLAYER
+          Singleplayer
         </button>
 
         <button className="form-button" onClick={() => navigate("/multi")}>
-          MULTIPLAYER
+          Multiplayer
         </button>
       </div>
     </div>

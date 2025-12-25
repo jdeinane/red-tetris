@@ -18,7 +18,7 @@ export default function SingleGame() {
       alignItems: "center", 
       width: "100%" 
     }}>
-      <h1 className="title" style={{ marginBottom: "20px" }}>Singleplayer</h1>
+      <h1 className="title" style={{ marginBottom: "20px" }}>Solo Game</h1>
       
       <TetrisGame
         key={gameId}

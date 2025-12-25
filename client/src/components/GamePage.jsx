@@ -132,6 +132,15 @@ export default function GamePage() {
 	}
 
 	return (
+	<div style={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      alignItems: "center", 
+      width: "100%" 
+    }}>
+      <h1 className="title" style={{ marginBottom: "20px" }}>
+        Playing in: <span style={{ color: "var(--I)" }}>{room}</span>
+      </h1>
 		<TetrisGame
 		sequence={sequence}
 		spawn={spawn}
@@ -144,5 +153,6 @@ export default function GamePage() {
 		onExit={handleQuitToMenu}
 		isSolo={isSolo}
 		/>
+		</div>
 	);
 }

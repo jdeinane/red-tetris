@@ -10,11 +10,11 @@ export default function Multiplayer() {
         <h1 className="title">Multiplayer</h1>
 
         <button className="form-button" onClick={() => navigate("/multi/create")}>
-          CREATE A LOBBY
+          Create a Lobby
         </button>
 
         <button className="form-button" onClick={() => navigate("/multi/join")}>
-          JOIN A LOBBY
+          Join a Lobby
         </button>
       </div>
     </div>
