@@ -13,7 +13,7 @@
   --glass-bg-strong: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-  --glass-blur: 14px;
+  --glass-blur: 0px;
 
   /* ===== TEXT ===== */
   --text-primary: rgba(255, 255, 255, 0.95);
@@ -74,9 +74,9 @@ html, body {
 
 /* Mixin Glass */
 .glass-panel, .content-box, .card {
-  background: var(--glass-bg);
+  background: #6c395d;
   backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: none;
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--border-radius-lg);
@@ -236,7 +236,7 @@ button:disabled, .form-button:disabled {
   
   /* Glass Style */
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
+  backdrop-filter: none;
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -256,13 +256,13 @@ button:disabled, .form-button:disabled {
 }
 
 /* Block colors */
-.cell-I, .next-I { background: var(--I); box-shadow: 0 0 10px var(--I); border: 1px solid rgba(255,255,255,0.4); }
-.cell-J, .next-J { background: var(--J); box-shadow: 0 0 10px var(--J); border: 1px solid rgba(255,255,255,0.4); }
-.cell-L, .next-L { background: var(--L); box-shadow: 0 0 10px var(--L); border: 1px solid rgba(255,255,255,0.4); }
-.cell-O, .next-O { background: var(--O); box-shadow: 0 0 10px var(--O); border: 1px solid rgba(255,255,255,0.4); }
-.cell-S, .next-S { background: var(--S); box-shadow: 0 0 10px var(--S); border: 1px solid rgba(255,255,255,0.4); }
-.cell-T, .next-T { background: var(--T); box-shadow: 0 0 10px var(--T); border: 1px solid rgba(255,255,255,0.4); }
-.cell-Z, .next-Z { background: var(--Z); box-shadow: 0 0 10px var(--Z); border: 1px solid rgba(255,255,255,0.4); }
+.cell-I, .next-I { background: var(--I); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+.cell-J, .next-J { background: var(--J); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+.cell-L, .next-L { background: var(--L); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+.cell-O, .next-O { background: var(--O); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+.cell-S, .next-S { background: var(--S); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+.cell-T, .next-T { background: var(--T); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+.cell-Z, .next-Z { background: var(--Z); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
 
 /* Ghost Piece */
 .cell-ghost {
@@ -326,16 +326,16 @@ button:disabled, .form-button:disabled {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 15, 25, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
-  background: #2b3245;
+  background: #6c395d;
   border: 1px solid var(--glass-border);
   box-shadow: 0 25px 50px rgba(0,0,0,0.5);
   padding: 40px;
@@ -347,8 +347,8 @@ button:disabled, .form-button:disabled {
 }
 
 @keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* --- BACKGROUND VIDEO --- */
