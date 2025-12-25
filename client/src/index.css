@@ -54,13 +54,6 @@ html, body {
   overflow: hidden;
 }
 
-body {
-  background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.15), transparent 45%),
-    linear-gradient(135deg, var(--bg-dark), var(--bg-mid), var(--bg-light));
-  position: relative;
-}
-
 body::before,
 body::after {
   content: "";
@@ -381,3 +374,12 @@ button:disabled, .form-button:disabled {
   to { transform: scale(1); opacity: 1; }
 }
 
+/* --- BACKGROND VIDEO --- */
+.video-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+}

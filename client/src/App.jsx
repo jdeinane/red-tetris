@@ -12,6 +12,16 @@ import SingleGame from "./components/SingleGame";
 
 export default function App() {
   return (
+    <>
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="video-bg"
+      >
+        <source src="/gradient.mp4" type="video/mp4" />
+    </video>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/play" element={<Play />} />
@@ -22,5 +32,6 @@ export default function App() {
       <Route path="/multi/join/:room" element={<JoinName />} />
       <Route path="/:room/:player" element={<GamePage />} />
     </Routes>
+    </>
   );
 }
