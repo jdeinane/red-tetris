@@ -504,6 +504,7 @@ return (
           display: "flex",
           flexDirection: "column",
           gap: "12px",
+          zIndex: 50,
         }}
       >
         {Object.entries(safeSpectrums).map(([name, spect]) => (
