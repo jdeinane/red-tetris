@@ -57,6 +57,7 @@ class Game {
 
     addPlayer(socketId, username) {
         this.players[socketId] = new Player(username);
+        this.players[socketId].ready = true;
 
         // First player = host
         if (!this.host) {
@@ -81,6 +82,7 @@ class Game {
             id: socketId,
             username: player.username,
             isHost: socketId === this.host,
+            ready: player.ready,
         }));
     }
 

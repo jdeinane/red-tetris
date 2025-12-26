@@ -150,17 +150,21 @@ io.on("connection", (socket) => {
    */
   socket.on("start-game", ({ room }) => {
     const r = getOrCreateGame(room);
-
+    const allReady = Object.values(r.players).every(p => p.ready);
     // Security: Only host can start
     if (socket.id !== r.host)
       return;
     if (r.isGameRunning)
+      return;
+    if (!allReady)
       return;
     if (Object.keys(r.players).length < 2)
       return;
 
     r.isGameRunning = true;
     r.alive = new Set(Object.keys(r.players));
+
+    Object.values(r.players).forEach(p => p.ready = false);
 
     // Generate the SAME sequence of pieces for all players (Fairness)
     const sequence = generateSequence(10000);
@@ -171,6 +175,16 @@ io.on("connection", (socket) => {
 	});
 
     console.log(`** Game started in room ${room} **`);
+
+    io.to(room).emit("room-players", r.getPlayersInfo());
+  });
+
+  socket.on("player-ready", ({ room }) => {
+    const r = getOrCreateGame(room);
+    if (r && r.players[socket.id]) {
+      r.players[socket.id].ready = true;
+      io.to(room).emit("room-players", r.getPlayersInfo());
+    }
   });
 
   /**

@@ -5,6 +5,8 @@ export default function LobbyPage({ socket, players, gameRunning }) {
 
   const me = players.find(p => p.username === player);
   const isHost = me?.isHost;
+  const allReady = players.every(p => p.ready);
+  const canStart = players.length >= 2 && allReady;
 
   return (
     <div className="page-container">
@@ -20,7 +22,11 @@ export default function LobbyPage({ socket, players, gameRunning }) {
         <ul>
           {players.map((p) => (
             <li key={p.id}>
-              <span>{p.username}</span>
+              <span>
+                {p.username}
+                {!p.ready && <span style={{fontSize: "0.8em", color: "orange", marginLeft: "10px"}}>(In Results...)</span>}
+                {p.ready && <span style={{fontSize: "0.8em", color: "#4ade80", marginLeft: "10px"}}>✓</span>}
+              </span>
               {p.isHost && <span style={{ opacity: 0.5, fontSize: "0.8em" }}>👑 HOST</span>}
             </li>
           ))}
@@ -32,9 +38,9 @@ export default function LobbyPage({ socket, players, gameRunning }) {
               <button className="form-button" disabled style={{ opacity: 0.5, cursor: "wait" }}>
                 Game in progress...
               </button>
-            ) : players.length < 2 ? (
+            ) : !canStart ? (
               <button className="form-button" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>
-                Waiting for players...
+                {players.length < 2 ? "Waiting for players..." : "Waiting for everyone..."}
               </button>
             ) : (
               <button 

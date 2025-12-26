@@ -111,6 +111,8 @@ export default function GamePage() {
 		setSequence(null);
 		setModal(null);
 		setSpectrums({});
+		if (socket)
+			socket.emit("player-ready", { room });
 	};
 
 	const handleQuitToMenu = () => {
