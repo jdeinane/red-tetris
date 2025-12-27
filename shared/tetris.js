@@ -302,12 +302,7 @@ export function addGarbageLines(board, count) {
 			return null;
 
 		newBoard.shift(); // Remove top line
-
-		// Create a garbage line with one random hole
-		const hole = Math.floor(Math.random() * cols);
-		const garbageRow = Array.from({ length: cols }, (_, x) =>
-		x === hole ? 0 : "G"
-		);
+		const garbageRow = Array(cols).fill("G");
 
 		console.log("Garbage row added:", garbageRow); // DEBUG
 		newBoard.push(garbageRow);
