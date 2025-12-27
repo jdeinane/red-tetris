@@ -107,14 +107,20 @@ export default function TetrisGame({
     const type = sequence[indexRef.current];
     indexRef.current += 1;
     setIndex(indexRef.current);
-    const newPiece = createPiece(type, spawn);
+
+    let newPiece = createPiece(type, spawn);
 
     // Immediate collision on spawn = Game Over
     if (hasCollision(boardRef.current, newPiece)) {
-      isGameOverRef.current = true;
-      setIsGameOver(true);
-      notifyGameOver();
-      return;
+	  const liftedPiece = { ...newPiece, y: newPiece.y - 1 };
+		if (hasCollision(boardRef.current, liftedPiece)) {
+			isGameOverRef.current = true;
+			setIsGameOver(true);
+			notifyGameOver();
+			return;
+		} else {
+			newPiece = liftedPiece;
+		}
     }
 
     syncPiece(newPiece);
@@ -335,13 +341,6 @@ export default function TetrisGame({
             syncPiece(null);
             canHoldRef.current = true;
             lockStartRef.current = null;
-
-            // Top Out Check
-            if (cleaned[0].some((c) => c !== 0)) {
-              isGameOverRef.current = true;
-              setIsGameOver(true);
-              notifyGameOver();
-            }
         }
       } else {
         // No collision below, reset lock timer
