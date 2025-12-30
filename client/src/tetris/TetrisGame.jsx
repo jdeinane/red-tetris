@@ -45,6 +45,8 @@ export default function TetrisGame({
   const [isGameOver, setIsGameOver] = useState(false);
   const [holdType, setHoldType] = useState(null);
 
+  const [score, setScore] = useState(0);
+
   // Refs for logic loop access
   const boardRef = useRef(board);
   const pieceRef = useRef(null);
@@ -90,6 +92,13 @@ export default function TetrisGame({
     setActivePiece(p);
   }
 
+  const addScore = (lines) => {
+	if (lines === 0)
+		return;
+
+	const points = [0, 100, 300, 500, 800];
+	setScore(prev => prev + (points[lines] || 0));
+  };
 
   /* GAME LOGIC */
 
@@ -187,6 +196,7 @@ export default function TetrisGame({
 
     // Send malus
     notifyLinesCleared(clearedLines);
+	addScore(clearedLines);
 
     // Update game state
     syncBoard(cleaned);
@@ -336,6 +346,7 @@ export default function TetrisGame({
             const clearedLines = clearResult.clearedLines || 0;
 
             notifyLinesCleared(clearedLines);
+			addScore(clearedLines);
 
             syncBoard(cleaned);
             syncPiece(null);
@@ -475,8 +486,10 @@ return (
         display: "flex",
         flexDirection: "row",
         justifyContent: "center",
+		alignItems: "flex-start",
         gap: "40px",
         position: "relative",
+		marginTop: "20px"
       }}
     >
       {/* HOLD */}
@@ -491,10 +504,46 @@ return (
         }
       />
 
-      {/* NEXT */}
-      <NextPiece type={nextType} />
+	  {/* RIGHT COLUMN */}
+      <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: "30px",
+          alignItems: "center"
+      }}>
+        
+        {/* NEXT PIECE */}
+        <NextPiece type={nextType} />
 
-      {/* SPECTRUM (autres joueurs) */}
+        {/* SCORE DISPLAY */}
+        <div style={{
+            color: "white",
+            fontFamily: "var(--font-tetris)",
+            textAlign: "center",
+            background: "rgba(0, 0, 0, 0.3)",
+            padding: "15px",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            minWidth: "100px"
+        }}>
+            <h2 style={{ 
+                margin: "0 0 10px 0", 
+                fontSize: "1.2rem", 
+                opacity: 0.8 
+            }}>SCORE</h2>
+            <p style={{ 
+                margin: 0, 
+                fontSize: "1.8rem", 
+                fontWeight: "bold",
+                color: "#3ee09dff",
+                textShadow: "0 0 10px rgba(167, 46, 116, 0.5)"
+            }}>
+                {score}
+            </p>
+        </div>
+      </div>
+
+      {/* SPECTRUM */}
       <div
         style={{
           position: "absolute",
