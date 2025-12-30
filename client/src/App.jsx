@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
+import { playSound, preloadSounds } from "./utils/audio";
 
 import Home from "./components/Home";
 import Play from "./components/Play";
@@ -11,27 +12,34 @@ import GamePage from "./components/GamePage";
 import SingleGame from "./components/SingleGame";
 
 export default function App() {
+
+  useEffect(() => {
+    preloadSounds();
+
+    // Listen for ALL button clicks
+    const handleGlobalClick = (e) => {
+      if (e.target.closest("button") || e.target.closest("a")) {
+        playSound("click", 0.4);
+      }
+    };
+
+    window.addEventListener("click", handleGlobalClick);
+    return () => window.removeEventListener("click", handleGlobalClick);
+  }, []);
+
   return (
     <>
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="video-bg"
-      >
-        <source src="/gradient.mp4" type="video/mp4" />
-    </video>
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/play" element={<Play />} />
-      <Route path="/game" element={<SingleGame />} />
-      <Route path="/multi" element={<Multiplayer />} />
-      <Route path="/multi/create" element={<CreateLobby />} />
-      <Route path="/multi/join" element={<JoinLobby />} />
-      <Route path="/multi/join/:room" element={<JoinName />} />
-      <Route path="/:room/:player" element={<GamePage />} />
-    </Routes>
+      {/* Video tag removed here */}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/play" element={<Play />} />
+        <Route path="/game" element={<SingleGame />} />
+        <Route path="/multi" element={<Multiplayer />} />
+        <Route path="/multi/create" element={<CreateLobby />} />
+        <Route path="/multi/join" element={<JoinLobby />} />
+        <Route path="/multi/join/:room" element={<JoinName />} />
+        <Route path="/:room/:player" element={<GamePage />} />
+      </Routes>
     </>
   );
 }
