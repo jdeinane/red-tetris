@@ -1,4 +1,4 @@
-export default function Board({ board, activePiece, ghostPiece }) {
+export default function Board({ board, activePiece, ghostPiece, animationClass }) {
   const displayBoard = board.map(row => [...row]);
 
   /* --- DISPLAY ACTIVE PIECE --- */
@@ -49,7 +49,8 @@ export default function Board({ board, activePiece, ghostPiece }) {
   }
 
   return (
-    <div className="board">
+    // [CHANGE] Added animationClass to the className list
+    <div className={`board ${animationClass || ""}`}>
       {displayBoard.map((row, rowIndex) =>
         row.map((cell, colIndex) => (
           <div

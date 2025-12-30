@@ -371,3 +371,36 @@ button:disabled, .form-button:disabled {
   object-fit: cover;
   z-index: -1;
 }
+
+.shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+  40%, 60% { transform: translate3d(6px, 0, 0); }
+}
+
+/* 2. Flash (Tetris / 4 Lines) */
+.flash {
+  animation: flash-animation 0.25s ease-out;
+}
+
+@keyframes flash-animation {
+  0% { filter: brightness(1); }
+  25% { filter: brightness(2.5) contrast(1.2); }
+  100% { filter: brightness(1); }
+}
+
+/* 3. Pulse (Line Clear 1-3) */
+.pulse {
+  animation: pulse-animation 0.2s ease-out;
+}
+
+@keyframes pulse-animation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
