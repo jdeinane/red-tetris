@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 
 import Home from "./components/Home";
 import Play from "./components/Play";
+import BackButton from "./components/BackButton";
 import Multiplayer from "./components/Multiplayer";
 import CreateLobby from "./components/CreateLobby";
 import JoinLobby from "./components/JoinLobby";
@@ -27,6 +28,9 @@ return (
       >
         <source src="/gradient.mp4" type="video/mp4" />
       </video>
+
+	  <BackButton />
+
       <Routes>
         <Route 
           path="/" 
