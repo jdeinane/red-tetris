@@ -480,87 +480,121 @@ const nextType =
 
 const safeSpectrums = spectrums || {};
 
-return (
+// --- COMMON STYLES ---
+  const columnStyle = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    alignItems: "center",
+    width: "220px",
+    minWidth: "220px",
+  };
+
+  const boxStyle = {
+    width: "100%", 
+    background: "rgba(0, 0, 0, 0.3)",
+    padding: "15px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px",
+    boxSizing: "border-box",
+  };
+
+  return (
     <div
       style={{
         display: "flex",
         flexDirection: "row",
         justifyContent: "center",
-		alignItems: "flex-start",
+        alignItems: "flex-start",
         gap: "40px",
         position: "relative",
-		marginTop: "20px"
+        marginTop: "20px"
       }}
     >
-      {/* HOLD */}
-      <HoldPiece type={holdType} />
 
-      {/* BOARD */}
-      <Board
-        board={board}
-        activePiece={activePiece}
-        ghostPiece={
-          activePiece ? getGhostPiece(board, activePiece) : null
-        }
-      />
+      {/* --- LEFT COLUMN (HOLD + SPECTERS) --- */}
+      <div style={columnStyle}>
+        
+        {/* HOLD PIECE */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
+            <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", letterSpacing: "2px" }}>HOLD</span>
+            <HoldPiece type={holdType} />
+        </div>
 
-	  {/* RIGHT COLUMN */}
-      <div style={{ 
-          display: "flex", 
-          flexDirection: "column", 
-          gap: "30px",
-          alignItems: "center"
-      }}>
+        {/* SPECTRUMS */}
+        {Object.keys(safeSpectrums).length > 0 && (
+            <div style={boxStyle}>
+                <h3 style={{ 
+                    color: "rgba(255,255,255,0.7)", 
+                    fontSize: "0.9rem", 
+                    margin: 0,
+                    textTransform: "uppercase",
+                    letterSpacing: "2px",
+                    borderBottom: "1px solid rgba(255,255,255,0.1)",
+                    paddingBottom: "5px",
+                    width: "100%",
+                    textAlign: "center"
+                }}>
+                    Opponents
+                </h3>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: "15px", width: "100%", alignItems: "center" }}>
+                  {Object.entries(safeSpectrums).map(([name, spect]) => (
+                    <SpectrumView key={name} name={name} spectrum={spect} />
+                  ))}
+                </div>
+            </div>
+        )}
+
+      </div>
+
+      {/* --- CENTER (BOARD) --- */}
+      <div style={{ boxShadow: "0 0 40px rgba(0,0,0,0.5)" }}>
+        <Board
+          board={board}
+          activePiece={activePiece}
+          ghostPiece={
+            activePiece ? getGhostPiece(board, activePiece) : null
+          }
+        />
+      </div>
+
+      {/* --- RIGHT COLUMN (NEXT + SCORE) --- */}
+      <div style={columnStyle}>
         
         {/* NEXT PIECE */}
-        <NextPiece type={nextType} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
+            <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", letterSpacing: "2px" }}>NEXT</span>
+            <NextPiece type={nextType} />
+        </div>
 
         {/* SCORE DISPLAY */}
-        <div style={{
-            color: "white",
-            fontFamily: "var(--font-tetris)",
-            textAlign: "center",
-            background: "rgba(0, 0, 0, 0.3)",
-            padding: "15px",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            minWidth: "100px"
-        }}>
+        <div style={boxStyle}>
             <h2 style={{ 
-                margin: "0 0 10px 0", 
-                fontSize: "1.2rem", 
-                opacity: 0.8 
+                margin: 0, 
+                fontSize: "1rem", 
+                color: "rgba(255,255,255,0.7)",
+                letterSpacing: "2px"
             }}>SCORE</h2>
+            
             <p style={{ 
                 margin: 0, 
-                fontSize: "1.8rem", 
+                fontSize: "2rem", 
                 fontWeight: "bold",
-                color: "#3ee09dff",
-                textShadow: "0 0 10px rgba(167, 46, 116, 0.5)"
+                color: "#3ee09d",
+                textShadow: "0 0 15px rgba(62, 224, 157, 0.4)",
+                fontFamily: "var(--font-tetris)"
             }}>
                 {score}
             </p>
         </div>
       </div>
 
-      {/* SPECTRUM */}
-      <div
-        style={{
-          position: "absolute",
-          right: "-150px",
-          top: "20px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          zIndex: 50,
-        }}
-      >
-        {Object.entries(safeSpectrums).map(([name, spect]) => (
-          <SpectrumView key={name} name={name} spectrum={spect} />
-        ))}
-      </div>
-
-      {/* GAME OVER UI (MODALE SERVEUR) */}
+      {/* --- MODALES --- */}
       {endGame && (
         <GameOverModal 
           result={endGame.result}
@@ -570,7 +604,6 @@ return (
         />
       )}
 
-      {/* LOCAL GAME OVER (ELIMINATED / SOLO) */}
       {isGameOver && !endGame && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -589,7 +622,7 @@ return (
                       Waiting for winner...
                   </p>
                   <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
-                      Watch the spectrums on the right!
+                      Watch the spectrums on the left!
                   </p>
               </div>
             )}
@@ -597,12 +630,9 @@ return (
             <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
               {isSolo ? (
                   <>
-                      {/* BOUTON RETRY */}
                       <button className="btn" onClick={restartGame}>
                           RETRY
                       </button>
-                      
-                      {/* BOUTON MAIN MENU */}
                       <button
                           className="btn"
                           onClick={onExit}
