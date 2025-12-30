@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import path from "path";
+import fs from 'fs';
 import { fileURLToPath } from "url";
 import { games, getOrCreateGame, removeEmptyGame } from "./Game.js";
 import { generateSequence } from "../shared/pieces.js";
@@ -18,6 +19,8 @@ import { generateSequence } from "../shared/pieces.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const LEADERBOARD_FILE = path.join(__dirname, 'leaderboard.json');
 
 /* Initialize Express + HTTP server */
 const app = express();
@@ -75,6 +78,30 @@ function checkWinner(room) {
   }
 }
 
+if (!fs.existsSync(LEADERBOARD_FILE)) {
+	fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify([]));
+}
+
+function getLeaderboard() {
+	try {
+		const data = fs.readFileSync(LEADERBOARD_FILE);
+		return JSON.parse(data);
+	} catch(e) {
+		return [];
+	}
+}
+
+function saveScore(name, score) {
+	const scores = getLeaderboard();
+	scores.push({ name, score, date: new Date().toISOString() });
+	
+	scores.sort((a, b) => b.score - a.score);
+	const top10 = scores.slice(0, 10);
+
+	fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(top10, null, 2));
+	return top10;
+}
+
 /* --- SOCKET EVENT HANDLERS --- */
 io.on("connection", (socket) => {
   console.log("🟢 Connected:", socket.id);
@@ -125,6 +152,7 @@ io.on("connection", (socket) => {
     // Broadcast updates
     io.to(room).emit("room-players", r.getPlayersInfo());
 	  io.emit("rooms-list", getRoomsList());
+
   });
 
   /**
@@ -235,6 +263,21 @@ io.on("connection", (socket) => {
       from: player,
       count: garbage,
     });
+  });
+
+  /**
+   * EVENT: leaderboard
+   * Handles leaderboard requests.
+   */
+  socket.on('request-leaderboard', () => {
+	socket.emit('leaderboard-data', getLeaderboard());
+  });
+
+  socket.on('submit-score', ({ name, score }) => {
+	if (score > 0) {
+		const newLeaderboard = saveScore(name, score);
+		io.emit('leaderboard-data', newLeaderboard);
+	}
   });
 });
 

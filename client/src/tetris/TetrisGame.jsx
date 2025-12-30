@@ -46,6 +46,7 @@ export default function TetrisGame({
   const [holdType, setHoldType] = useState(null);
 
   const [score, setScore] = useState(0);
+  const scoreSavedRef = useRef(false);
 
   // Refs for logic loop access
   const boardRef = useRef(board);
@@ -316,7 +317,7 @@ export default function TetrisGame({
 
     function loop() {
       if (isGameOverRef.current) return;
-
+	
       if (!pieceRef.current) spawnPiece();
 
       const now = performance.now();
@@ -365,7 +366,7 @@ export default function TetrisGame({
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [sequence, isGameOver, socket, room, player]);
+  }, [sequence, score, isGameOver, socket, room, player]);
 
 
   /* GARBAGE HANDLING */
@@ -443,6 +444,22 @@ export default function TetrisGame({
 	}
 	}, [endGame]);
 
+	/* GAME OVER LOGIC (Save Score) */
+	useEffect(() => {
+		if (isGameOver || endGame) {
+			if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+			if (score > 0 && !scoreSavedRef.current && socket && !isSolo) {
+				scoreSavedRef.current = true;
+				
+				const nameToSend = typeof player === 'object' ? player.name : player; 
+				
+				socket.emit('submit-score', { name: nameToSend, score: score });
+			}
+		} else {
+		scoreSavedRef.current = false;
+		}
+	}, [isGameOver, endGame, score, player, socket, isSolo]);
 
   //* RESTART LOGIC (SOLO) */
   function restartGame() {
@@ -450,7 +467,7 @@ export default function TetrisGame({
       onRestart();
       return;
     }
-  
+
     // Local restart
     const empty = createEmptyBoard();
     syncBoard(empty);
