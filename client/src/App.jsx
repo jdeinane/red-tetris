@@ -11,6 +11,7 @@ import JoinLobby from "./components/JoinLobby";
 import JoinName from "./components/JoinName";
 import GamePage from "./components/GamePage";
 import SingleGame from "./components/SingleGame";
+import NotFound from "./components/NotFound";
 
 const socket = io("http://localhost:3000");
 
@@ -68,6 +69,7 @@ return (
             />
           } 
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
