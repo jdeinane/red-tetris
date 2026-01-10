@@ -8,36 +8,34 @@ import { PIECE_SHAPES } from "./pieces.js";
 */
 
 
-/* Wall Kick Data (SRS - Super Rotation System simplified)
+/* Wall Kick Data (SRS - Super Rotation System)
 Offsets to try when a rotation fails (e.g. against a wall) */
-const WALL_KICKS = {
-  DEFAULT: [
-		[0, 0],   // 1. Normal rotation
-		[-1, 0],  // 2. Try moving left
-		[1, 0],   // 3. Try moving right
-		[0, -1],  // 4. Try moving up (floor kick)
-		[-2, 0],  // 5. Double left
-		[2, 0],   // 6. Double right
-		[-1, -1], // 7. Diagonal
-		[1, -1],
-		[0, -2],  // 8. High ascend
-	],
+const JLSTZ_KICKS = {
+  "0>1": [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+  "1>0": [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
 
-/* "I" piece is special (4x4 matrix), needs more aggressive kicks */ 
-	I: [ 
-		[0, 0],
-        [-2, 0],  // 1. Double left
-        [2, 0],   // 2. Double right
-        [-1, 0],  // 3. Simple left
-        [1, 0],   // 4. Simple right
-        [-3, 0],  // 5. Triple left
-        [3, 0],   // 6. Triple right
-        [0, -1],  // 7. Top
-        [-2, -1], 
-        [2, -1],
-        [0, -2],
-        [0, -3]   // 8. Triple top
-	]
+  "1>2": [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+  "2>1": [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+
+  "2>3": [[0,0], [1,0], [1,-1], [0,2], [1,2]],
+  "3>2": [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+
+  "3>0": [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+  "0>3": [[0,0], [1,0], [1,-1], [0,2], [1,2]],
+};
+
+const I_KICKS = {
+  "0>1": [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],
+  "1>0": [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],
+
+  "1>2": [[0,0], [-1,0], [2,0], [-1,-2], [2,1]],
+  "2>1": [[0,0], [1,0], [-2,0], [1,2], [-2,-1]],
+
+  "2>3": [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],
+  "3>2": [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],
+
+  "3>0": [[0,0], [1,0], [-2,0], [1,2], [-2,-1]],
+  "0>3": [[0,0], [-1,0], [2,0], [-1,-2], [2,1]],
 };
 
 
@@ -70,6 +68,7 @@ export function createPiece(type, spawn = null) {
 		shape,
 		x: s.x,
 		y: s.y,
+		rot: 0,
 	};
 }
 
@@ -159,14 +158,20 @@ function rotateMatrixCW(matrix) {
 export function rotatePiece(board, piece) {
 	if (!piece) return null;
 
-	if (piece.type === 'O') return piece; // O shape doesn't rotate
+	if (piece.type === 'O') return piece;
+
+	const fromRot = piece.rot ?? 0;
+	const toRot = (fromRot + 1) % 4;
+	const key = `${fromRot}>${toRot}`;
 
 	const newShape = rotateMatrixCW(piece.shape);
-	const candidate = { ...piece, shape: newShape };
+	const candidate = { ...piece, shape: newShape, rot: toRot };
 
 	// Select appropriate kick table
-	const kicks = piece.type === 'I' ? WALL_KICKS.I : WALL_KICKS.DEFAULT;
-
+	const kicks = piece.type === 'I' ? I_KICKS[key] : JLSTZ_KICKS[key];
+	if (!kicks) {
+		return hasCollision(board, candidate, 0,0) ? piece : candidate;
+	}
 	// Try original position, then try all kick offsets
 	for (const [ox, oy] of kicks) {
 		if (!hasCollision(board, candidate, ox, oy)) {
