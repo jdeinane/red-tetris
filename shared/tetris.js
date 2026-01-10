@@ -241,42 +241,6 @@ export function clearLines(board) {
 	return { board: newBoard, clearedLines: cleared };
 }
 
-/* Tick (gravity):
-	- moves the piece one square to the bottom
-	- if it can't go down: 
-		- merge to the board
-		- remove lines
-		- flag the piece as `locked`
-		- activePiece = null
-	- otherwise:
-		- the piece continues to go down
-		- nothing is merge */
-export function tick(board, activePiece) {
-	// Try to down the piece
-	const dropped = movePiece(board, activePiece, 0, 1);
-
-	// If not moving -> lock the piece
-	if (dropped === activePiece) {
-		const withPiece = mergePiece(board, activePiece);
-		const { board: cleaned, clearedLines } = clearLines(withPiece);
-
-		return {
-			board: cleaned,
-			activePiece: null,
-			locked: true,
-			clearedLines,
-		};
-	}
-
-	// Else, simply update the position
-	return {
-		board,
-		activePiece: dropped,
-		locked: false,
-		clearedLines: 0,
-	};
-}
-
 /**
  * Calculates where the piece will land (for the Ghost Piece display).
  */
