@@ -120,13 +120,6 @@ export function movePiece(board, piece, dx, dy) {
 }
 
 /**
- * Normal drop
- */
-export function softDrop(board, piece) {
-	return movePiece(board, piece, 0, 1);
-}
-
-/**
  * Instantly drops the piece to the lowest valid position (Spacebar action).
  */
 export function hardDrop(board, piece) {
