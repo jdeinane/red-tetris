@@ -156,10 +156,9 @@ describe("Tetris Logic Coverage", () => {
     
     // Piece should be moved up
     expect(newBoard[18][0]).toBe("I");
-    // Bottom line should have garbage ('G') and one hole (0)
+    // Bottom line should be completely filled with garbage ('G')
     const bottomRow = newBoard[19];
-    expect(bottomRow.includes("G")).toBe(true);
-    expect(bottomRow.includes(0)).toBe(true); // The hole
+    expect(bottomRow).toEqual(Array(10).fill("G"));
   });
 
   test("addGarbageLines returns null on death (top out)", () => {
