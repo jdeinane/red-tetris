@@ -39,19 +39,9 @@ export default function BackButton() {
           e.currentTarget.style.transform = "scale(1)";
       }}
     >
-      <svg 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="3" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      >
-        <path d="M19 12H5" />
-        <path d="M12 19l-7-7 7-7" />
-      </svg>
+      <span style={{ fontSize: "2rem", lineHeight: "1", paddingBottom: "4px" }}>
+		&#8592;
+	  </span>
     </button>
   );
 }
