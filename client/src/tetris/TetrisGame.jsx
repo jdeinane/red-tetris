@@ -356,7 +356,7 @@ export default function TetrisGame({
         }
       } else {
         // No collision below, reset lock timer
-        if (lockStartRef.current !== null) {
+        if (lockStartRef.current !== null && lockResetRef.current < MAX_LOCK_RESETS) {
             lockStartRef.current = null;
         }
       }
